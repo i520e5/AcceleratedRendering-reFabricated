@@ -7,6 +7,10 @@ public class ColorUtils {
         return color & -16711936 | (color & 16711680) >> 16 | (color & 255) << 16;
     }
 
+    public static int ARGB32toRGBA32(int color) {
+        return color << 8 | color >>> 24;
+    }
+
     public static int argb32Color(
         float red,
         float green,

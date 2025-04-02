@@ -302,12 +302,10 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
         MemoryUtil.memPutFloat(vertexAddress + posOffset + 8L, pZ);
 
         if (defaultColorSet) {
-            color(
-                defaultR,
-                defaultG,
-                defaultB,
-                defaultA
-            );
+            MemoryUtil.memPutByte(vertexAddress + colorOffset + 0L, (byte) defaultR);
+            MemoryUtil.memPutByte(vertexAddress + colorOffset + 1L, (byte) defaultG);
+            MemoryUtil.memPutByte(vertexAddress + colorOffset + 2L, (byte) defaultB);
+            MemoryUtil.memPutByte(vertexAddress + colorOffset + 3L, (byte) defaultA);
         }
 
         MemoryUtil.memPutInt(varyingAddress + 0L * 4L, 0);
@@ -317,11 +315,11 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
         if (colorOffset != -1) {
             MemoryUtil.memPutInt(
                 vertexAddress + colorOffset + 0L,
-                FastColor.ABGR32.color(
-                    (int) (alpha * 255),
-                    (int) (blue * 255),
+                FastColor.ARGB32.color(
+                    (int) (red * 255),
                     (int) (green * 255),
-                    (int) (red * 255)
+                    (int) (blue * 255),
+                    (int) (alpha * 255)
                 )
             );
         }
@@ -423,7 +421,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
         );
 
         if (colorOffset != -1) {
-            MemoryUtil.memPutInt(vertexAddress + colorOffset, ColorUtils.ARGB32toABGR32(color));
+            MemoryUtil.memPutInt(vertexAddress + colorOffset, ColorUtils.ARGB32toRGBA32(color));
         }
 
         if (uv1Offset != -1) {
@@ -462,7 +460,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
         data.addExtraVarying(varyingAddress);
 
         if (colorOffset != -1) {
-            MemoryUtil.memPutInt(vertexAddress + colorOffset, ColorUtils.ARGB32toABGR32(color));
+            MemoryUtil.memPutInt(vertexAddress + colorOffset, ColorUtils.ARGB32toRGBA32(color));
         }
 
         if (uv1Offset != -1) {
