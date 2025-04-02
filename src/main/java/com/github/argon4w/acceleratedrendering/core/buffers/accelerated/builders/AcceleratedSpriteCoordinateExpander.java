@@ -108,12 +108,12 @@ public class AcceleratedSpriteCoordinateExpander implements IAcceleratedVertexCo
     }
 
     @Override
-    public VertexConsumer addVertex(
-            float pX,
-            float pY,
-            float pZ
+    public VertexConsumer vertex(
+            double pX,
+            double pY,
+            double pZ
     ) {
-        delegate.addVertex(
+        delegate.vertex(
                 pX,
                 pY,
                 pZ
@@ -122,13 +122,13 @@ public class AcceleratedSpriteCoordinateExpander implements IAcceleratedVertexCo
     }
 
     @Override
-    public VertexConsumer addVertex(
-            PoseStack.Pose pPose,
+    public VertexConsumer vertex(
+            Matrix4f pPose,
             float pX,
             float pY,
             float pZ
     ) {
-        delegate.addVertex(
+        delegate.vertex(
                 pPose,
                 pX,
                 pY,
@@ -138,31 +138,31 @@ public class AcceleratedSpriteCoordinateExpander implements IAcceleratedVertexCo
     }
 
     @Override
-    public VertexConsumer setUv(float pU, float pV) {
-        delegate.setUv(sprite.getU(pU), sprite.getV(pV));
+    public VertexConsumer uv(float pU, float pV) {
+        delegate.uv(sprite.getU(pU), sprite.getV(pV));
         return this;
     }
 
     @Override
-    public VertexConsumer setUv1(int pU, int pV) {
-        delegate.setUv1(pU, pV);
+    public VertexConsumer overlayCoords(int pU, int pV) {
+        delegate.overlayCoords(pU, pV);
         return this;
     }
 
     @Override
-    public VertexConsumer setUv2(int pU, int pV) {
-        delegate.setUv2(pU, pV);
+    public VertexConsumer uv2(int pU, int pV) {
+        delegate.uv2(pU, pV);
         return this;
     }
 
     @Override
-    public VertexConsumer setColor(
+    public VertexConsumer color(
             int pRed,
             int pGreen,
             int pBlue,
             int pAlpha
     ) {
-        delegate.setColor(
+        delegate.color(
                 pRed,
                 pGreen,
                 pBlue,
@@ -172,12 +172,12 @@ public class AcceleratedSpriteCoordinateExpander implements IAcceleratedVertexCo
     }
 
     @Override
-    public VertexConsumer setNormal(
+    public VertexConsumer normal(
             float pNormalX,
             float pNormalY,
             float pNormalZ
     ) {
-        delegate.setNormal(
+        delegate.normal(
                 pNormalX,
                 pNormalY,
                 pNormalZ
@@ -186,13 +186,28 @@ public class AcceleratedSpriteCoordinateExpander implements IAcceleratedVertexCo
     }
 
     @Override
-    public VertexConsumer setNormal(
-            PoseStack.Pose pPose,
+    public void endVertex() {
+        delegate.endVertex();
+    }
+
+    @Override
+    public void defaultColor(int defaultR, int defaultG, int defaultB, int defaultA) {
+        delegate.defaultColor(defaultR, defaultG, defaultB, defaultA);
+    }
+
+    @Override
+    public void unsetDefaultColor() {
+        delegate.unsetDefaultColor();
+    }
+
+    @Override
+    public VertexConsumer normal(
+            Matrix3f pPose,
             float pNormalX,
             float pNormalY,
             float pNormalZ
     ) {
-        delegate.setNormal(
+        delegate.normal(
                 pPose,
                 pNormalX,
                 pNormalY,
@@ -202,31 +217,7 @@ public class AcceleratedSpriteCoordinateExpander implements IAcceleratedVertexCo
     }
 
     @Override
-    public void addVertex(
-            float pX,
-            float pY,
-            float pZ,
-            int pColor,
-            float pU,
-            float pV,
-            int pPackedOverlay,
-            int pPackedLight,
-            float pNormalX,
-            float pNormalY,
-            float pNormalZ
-    ) {
-        delegate.addVertex(
-                pX,
-                pY,
-                pZ,
-                pColor,
-                sprite.getU(pU),
-                sprite.getV(pV),
-                pPackedOverlay,
-                pPackedLight,
-                pNormalX,
-                pNormalY,
-                pNormalZ
-        );
+    public void vertex(float x, float y, float z, float red, float green, float blue, float alpha, float texU, float texV, int overlayUV, int lightmapUV, float normalX, float normalY, float normalZ) {
+        delegate.vertex(x, y, z, red, green, blue, alpha, sprite.getU(texU), sprite.getV(texV), overlayUV, lightmapUV, normalX, normalY, normalZ);
     }
 }

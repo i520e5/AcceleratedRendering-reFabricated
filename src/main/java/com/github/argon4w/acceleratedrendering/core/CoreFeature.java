@@ -15,15 +15,15 @@ public class CoreFeature {
     }
 
     public static int getPooledBufferSetSize() {
-        return FeatureConfig.CONFIG.corePooledBufferSetSize.getAsInt();
+        return FeatureConfig.CONFIG.corePooledBufferSetSize.get();
     }
 
     public static int getPooledElementBufferSize() {
-        return FeatureConfig.CONFIG.corePooledElementBufferSize.getAsInt();
+        return FeatureConfig.CONFIG.corePooledElementBufferSize.get();
     }
 
     public static int getCachedImageSize() {
-        return FeatureConfig.CONFIG.coreCachedImageSize.getAsInt();
+        return FeatureConfig.CONFIG.coreCachedImageSize.get();
     }
 
     public static boolean shouldForceAccelerateTranslucent() {

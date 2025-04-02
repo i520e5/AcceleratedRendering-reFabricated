@@ -9,6 +9,7 @@ import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.Transfo
 import com.github.argon4w.acceleratedrendering.core.programs.extras.IExtraVertexData;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.IPolygonProcessor;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.LoadPolygonProcessorEvent;
+import com.github.argon4w.acceleratedrendering.core.extensions.VertexFormatExtension;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import net.minecraft.client.renderer.RenderType;
@@ -78,7 +79,7 @@ public class VanillaBufferEnvironment implements IBufferEnvironment {
 
     @Override
     public int getOffset(VertexFormatElement element) {
-        return vertexFormat.getOffset(element);
+        return VertexFormatExtension.of(vertexFormat).getOffset(element);
     }
 
     @Override

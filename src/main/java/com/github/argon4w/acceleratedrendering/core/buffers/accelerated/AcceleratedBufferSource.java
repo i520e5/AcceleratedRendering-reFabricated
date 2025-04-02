@@ -6,6 +6,7 @@ import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.El
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.MappedBufferPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.VertexBufferPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.environments.IBufferEnvironment;
+import com.github.argon4w.acceleratedrendering.core.extensions.ShaderInstanceExtension;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -138,7 +139,7 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
             VertexFormat.Mode mode = renderType.mode;
             ShaderInstance shader = RenderSystem.getShader();
 
-            shader.setDefaultUniforms(
+            ShaderInstanceExtension.of(shader).setDefaultUniforms(
                     mode,
                     RenderSystem.getModelViewMatrix(),
                     RenderSystem.getProjectionMatrix(),

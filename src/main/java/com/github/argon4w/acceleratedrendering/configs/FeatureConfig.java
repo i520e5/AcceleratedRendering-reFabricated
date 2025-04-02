@@ -1,57 +1,58 @@
 package com.github.argon4w.acceleratedrendering.configs;
 
 import com.github.argon4w.acceleratedrendering.core.meshes.MeshType;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.fml.config.IConfigSpec;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class FeatureConfig {
 
     public static final FeatureConfig CONFIG;
-    public static final ModConfigSpec SPEC;
+    public static final ForgeConfigSpec SPEC;
 
-    public final ModConfigSpec.IntValue corePooledBufferSetSize;
-    public final ModConfigSpec.IntValue corePooledElementBufferSize;
-    public final ModConfigSpec.IntValue coreCachedImageSize;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> coreDebugContextEnabled;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> coreForceTranslucentAcceleration;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> coreCacheIdenticalPose;
+    public final ForgeConfigSpec.IntValue corePooledBufferSetSize;
+    public final ForgeConfigSpec.IntValue corePooledElementBufferSize;
+    public final ForgeConfigSpec.IntValue coreCachedImageSize;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> coreDebugContextEnabled;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> coreForceTranslucentAcceleration;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> coreCacheIdenticalPose;
 
-    public final ModConfigSpec.ConfigValue<FeatureStatus> acceleratedEntityRenderingFeatureStatus;
-    public final ModConfigSpec.ConfigValue<PipelineSetting> acceleratedEntityRenderingDefaultPipeline;
-    public final ModConfigSpec.ConfigValue<MeshType> acceleratedEntityRenderingMeshType;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> acceleratedEntityRenderingFeatureStatus;
+    public final ForgeConfigSpec.ConfigValue<PipelineSetting> acceleratedEntityRenderingDefaultPipeline;
+    public final ForgeConfigSpec.ConfigValue<MeshType> acceleratedEntityRenderingMeshType;
 
-    public final ModConfigSpec.ConfigValue<FeatureStatus> acceleratedTextRenderingFeatureStatus;
-    public final ModConfigSpec.ConfigValue<PipelineSetting> acceleratedTextRenderingDefaultPipeline;
-    public final ModConfigSpec.ConfigValue<MeshType> acceleratedTextRenderingMeshType;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> acceleratedTextRenderingFeatureStatus;
+    public final ForgeConfigSpec.ConfigValue<PipelineSetting> acceleratedTextRenderingDefaultPipeline;
+    public final ForgeConfigSpec.ConfigValue<MeshType> acceleratedTextRenderingMeshType;
 
-    public final ModConfigSpec.ConfigValue<FeatureStatus> acceleratedItemRenderingFeatureStatus;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> acceleratedItemRenderingBakeMeshForQuads;
-    public final ModConfigSpec.ConfigValue<PipelineSetting> acceleratedItemRenderingDefaultPipeline;
-    public final ModConfigSpec.ConfigValue<MeshType> acceleratedItemRenderingMeshType;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> acceleratedItemRenderingFeatureStatus;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> acceleratedItemRenderingBakeMeshForQuads;
+    public final ForgeConfigSpec.ConfigValue<PipelineSetting> acceleratedItemRenderingDefaultPipeline;
+    public final ForgeConfigSpec.ConfigValue<MeshType> acceleratedItemRenderingMeshType;
 
-    public final ModConfigSpec.ConfigValue<FeatureStatus> acceleratedBlockEntityRenderingFeatureStatus;
-    public final ModConfigSpec.ConfigValue<PipelineSetting> acceleratedBlockEntityRenderingDefaultPipeline;
-    public final ModConfigSpec.ConfigValue<MeshType> acceleratedBlockEntityRenderingMeshType;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> acceleratedBlockEntityRenderingFeatureStatus;
+    public final ForgeConfigSpec.ConfigValue<PipelineSetting> acceleratedBlockEntityRenderingDefaultPipeline;
+    public final ForgeConfigSpec.ConfigValue<MeshType> acceleratedBlockEntityRenderingMeshType;
 
-    public final ModConfigSpec.ConfigValue<FeatureStatus> orientationCullingFeatureStatus;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> orientationCullingDefaultCulling;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> orientationCullingIgnoreCullState;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> orientationCullingFeatureStatus;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> orientationCullingDefaultCulling;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> orientationCullingIgnoreCullState;
 
-    public final ModConfigSpec.ConfigValue<FeatureStatus> irisCompatFeatureStatus;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> irisCompatOrientationCullingCompat;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> irisCompatShadowCulling;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> irisCompatEntitiesCompat;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> irisCompatPolygonProcessing;
-    public final ModConfigSpec.ConfigValue<FeatureStatus> irisCompatFastRenderTypeCheck;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> irisCompatFeatureStatus;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> irisCompatOrientationCullingCompat;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> irisCompatShadowCulling;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> irisCompatEntitiesCompat;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> irisCompatPolygonProcessing;
+    public final ForgeConfigSpec.ConfigValue<FeatureStatus> irisCompatFastRenderTypeCheck;
 
     static {
-        Pair<FeatureConfig, ModConfigSpec> pair = new ModConfigSpec.Builder().configure(FeatureConfig::new);
+        Pair<FeatureConfig, ForgeConfigSpec> pair = new ForgeConfigSpec.Builder().configure(FeatureConfig::new);
 
         CONFIG = pair.getLeft();
         SPEC = pair.getRight();
     }
 
-    private FeatureConfig(ModConfigSpec.Builder builder) {
+    private FeatureConfig(ForgeConfigSpec.Builder builder) {
         builder
                 .comment("Core Settings")
                 .comment("Core Settings allows you to change setting that are related to all rendering features.")
@@ -59,14 +60,14 @@ public class FeatureConfig {
                 .push("core_settings");
 
         corePooledBufferSetSize = builder
-                .gameRestart()
+                .worldRestart()
                 .comment("Count of buffer sets that holds data for in-flight frame rendering.")
                 .comment("Changing this value may affects your FPS. Smaller value means less in-flight frames, while larger values means more in-flight frames. More in-flight frames means more FPS but more VRAM.")
                 .translation("acceleratedrendering.configuration.core_settings.pooled_buffer_set_size")
                 .defineInRange("pooled_buffer_set_size", 5, 1, Integer.MAX_VALUE);
 
         corePooledElementBufferSize = builder
-                .gameRestart()
+                .worldRestart()
                 .comment("Count of batches of RenderTypes that is allowed in a draw call.")
                 .comment("Changing this value may affects your FPS. Smaller value means less batches allowed in a draw call, while larger values means more batches. More batches means more FPS but more VRAM and more CPU pressure on handling RenderTypes.")
                 .translation("acceleratedrendering.configuration.core_settings.pooled_element_buffer_size")
@@ -82,7 +83,7 @@ public class FeatureConfig {
                 .comment("- DISABLED: Debug context will be disabled, which may cause significant rendering glitches on some NVIDIA cards because of the \"theaded optimization\".")
                 .comment("- ENABLED: Debug context will be enabled, which can prevent NVIDIA driver from applying the \"threaded optimization\" that causes the glitches.")
                 .translation("acceleratedrendering.configuration.core_settings.debug_context")
-                .gameRestart()
+                .worldRestart()
                 .defineEnum("debug_context", FeatureStatus.ENABLED);
 
         coreForceTranslucentAcceleration = builder
@@ -118,7 +119,7 @@ public class FeatureConfig {
                 .defineEnum("default_pipeline", PipelineSetting.ACCELERATED);
 
         acceleratedEntityRenderingMeshType = builder
-                .gameRestart()
+                .worldRestart()
                 .comment("- CLIENT: Cached mesh will be stored on the client side (CPU), which will use less VRAM but take more time to upload to the server side (GPU) during rendering.")
                 .comment("- SERVER: Cached mesh will be stored on the server side (GPU), which may speed up rendering but will use more VRAM to store the mesh.")
                 .translation("acceleratedrendering.configuration.accelerated_entity_rendering.mesh_type")
@@ -145,7 +146,7 @@ public class FeatureConfig {
                 .defineEnum("default_pipeline", PipelineSetting.ACCELERATED);
 
         acceleratedBlockEntityRenderingMeshType = builder
-                .gameRestart()
+                .worldRestart()
                 .comment("- CLIENT: Cached mesh will be stored on the client side (CPU), which will use less VRAM but take more time to upload to the server side (GPU) during rendering.")
                 .comment("- SERVER: Cached mesh will be stored on the server side (GPU), which may speed up rendering but will use more VRAM to store the mesh.")
                 .translation("acceleratedrendering.configuration.accelerated_block_entity_rendering.mesh_type")
@@ -178,7 +179,7 @@ public class FeatureConfig {
                 .defineEnum("default_pipeline", PipelineSetting.ACCELERATED);
 
         acceleratedItemRenderingMeshType = builder
-                .gameRestart()
+                .worldRestart()
                 .comment("- CLIENT: Cached mesh will be stored on the client side (CPU), which will use less VRAM but take more time to upload to the server side (GPU) during rendering.")
                 .comment("- SERVER: Cached mesh will be stored on the server side (GPU), which may speed up rendering but will use more VRAM to store the mesh.")
                 .translation("acceleratedrendering.configuration.accelerated_item_rendering.mesh_type")
@@ -205,7 +206,7 @@ public class FeatureConfig {
                 .defineEnum("default_pipeline", PipelineSetting.ACCELERATED);
 
         acceleratedTextRenderingMeshType = builder
-                .gameRestart()
+                .worldRestart()
                 .comment("- CLIENT: Cached mesh will be stored on the client side (CPU), which will use less VRAM but take more time to upload to the server side (GPU) during rendering.")
                 .comment("- SERVER: Cached mesh will be stored on the server side (GPU), which may speed up rendering but will use more VRAM to store the mesh.")
                 .translation("acceleratedrendering.configuration.accelerated_text_rendering.mesh_type")

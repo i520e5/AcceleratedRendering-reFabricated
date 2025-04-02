@@ -1,6 +1,6 @@
 package com.github.argon4w.acceleratedrendering.compat.iris.mixins.iris;
 
-import net.irisshaders.iris.vertices.sodium.ModelToEntityVertexSerializer;
+import net.irisshaders.iris.compat.sodium.impl.vertex_format.ModelToEntityVertexSerializer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;

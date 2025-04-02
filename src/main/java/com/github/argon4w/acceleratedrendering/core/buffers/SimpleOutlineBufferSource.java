@@ -5,6 +5,7 @@ import com.mojang.blaze3d.vertex.VertexMultiConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.OutlineBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.util.FastColor;
 
 import java.util.Optional;
 
@@ -23,7 +24,13 @@ public class SimpleOutlineBufferSource implements MultiBufferSource {
     @Override
     public VertexConsumer getBuffer(RenderType pRenderType) {
         if (pRenderType.isOutline()) {
-            return new OutlineBufferSource.EntityOutlineGenerator(outlineBufferSource.getBuffer(pRenderType), color);
+            return new OutlineBufferSource.EntityOutlineGenerator(
+                outlineBufferSource.getBuffer(pRenderType),
+                FastColor.ARGB32.red(color),
+                FastColor.ARGB32.green(color),
+                FastColor.ARGB32.blue(color),
+                FastColor.ARGB32.alpha(color)
+            );
         }
 
         Optional<RenderType> outline = pRenderType.outline();
@@ -33,7 +40,16 @@ public class SimpleOutlineBufferSource implements MultiBufferSource {
             return buffer;
         }
 
-        return VertexMultiConsumer.create(buffer, new OutlineBufferSource.EntityOutlineGenerator(outlineBufferSource.getBuffer(outline.get()), color));
+        return VertexMultiConsumer.create(
+            buffer,
+            new OutlineBufferSource.EntityOutlineGenerator(
+                outlineBufferSource.getBuffer(outline.get()),
+                FastColor.ARGB32.red(color),
+                FastColor.ARGB32.green(color),
+                FastColor.ARGB32.blue(color),
+                FastColor.ARGB32.alpha(color)
+            )
+        );
     }
 
     public void setColor(int color) {

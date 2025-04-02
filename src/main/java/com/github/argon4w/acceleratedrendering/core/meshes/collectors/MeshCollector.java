@@ -1,10 +1,12 @@
 package com.github.argon4w.acceleratedrendering.core.meshes.collectors;
 
+import com.github.argon4w.acceleratedrendering.core.extensions.VertexFormatExtension;
+import com.github.argon4w.acceleratedrendering.core.utils.ByteBufferBuilder;
+import com.github.argon4w.acceleratedrendering.core.utils.ColorUtils;
 import com.github.argon4w.acceleratedrendering.core.utils.MemUtils;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
 import net.minecraft.util.FastColor;
 import org.lwjgl.system.MemoryUtil;
 
@@ -28,34 +30,34 @@ public class MeshCollector implements VertexConsumer {
         this.buffer = new ByteBufferBuilder(1024);
 
         this.vertexSize = this.vertexFormat.getVertexSize();
-        this.colorOffset = this.vertexFormat.getOffset(VertexFormatElement.COLOR);
-        this.posOffset = this.vertexFormat.getOffset(VertexFormatElement.POSITION);
-        this.uv0Offset = this.vertexFormat.getOffset(VertexFormatElement.UV);
-        this.uv2Offset = this.vertexFormat.getOffset(VertexFormatElement.UV2);
-        this.normalOffset = this.vertexFormat.getOffset(VertexFormatElement.NORMAL);
+        this.colorOffset = VertexFormatExtension.of(this.vertexFormat).getOffset(DefaultVertexFormat.ELEMENT_COLOR);
+        this.posOffset = VertexFormatExtension.of(this.vertexFormat).getOffset(DefaultVertexFormat.ELEMENT_POSITION);
+        this.uv0Offset = VertexFormatExtension.of(this.vertexFormat).getOffset(DefaultVertexFormat.ELEMENT_UV);
+        this.uv2Offset = VertexFormatExtension.of(this.vertexFormat).getOffset(DefaultVertexFormat.ELEMENT_UV2);
+        this.normalOffset = VertexFormatExtension.of(this.vertexFormat).getOffset(DefaultVertexFormat.ELEMENT_NORMAL);
 
         this.vertexAddress = -1L;
         this.vertexCount = 0;
     }
 
     @Override
-    public VertexConsumer addVertex(
-            float pX,
-            float pY,
-            float pZ
+    public VertexConsumer vertex(
+            double pX,
+            double pY,
+            double pZ
     ) {
         vertexCount++;
         vertexAddress = buffer.reserve(vertexSize);
 
-        MemoryUtil.memPutFloat(vertexAddress + posOffset + 0L, pX);
-        MemoryUtil.memPutFloat(vertexAddress + posOffset + 4L, pY);
-        MemoryUtil.memPutFloat(vertexAddress + posOffset + 8L, pZ);
+        MemoryUtil.memPutFloat(vertexAddress + posOffset + 0L, (float) pX);
+        MemoryUtil.memPutFloat(vertexAddress + posOffset + 4L, (float) pY);
+        MemoryUtil.memPutFloat(vertexAddress + posOffset + 8L, (float) pZ);
 
         return this;
     }
 
     @Override
-    public VertexConsumer setColor(
+    public VertexConsumer color(
             int pRed,
             int pGreen,
             int pBlue,
@@ -78,7 +80,7 @@ public class MeshCollector implements VertexConsumer {
     }
 
     @Override
-    public VertexConsumer setUv(float pU, float pV) {
+    public VertexConsumer uv(float pU, float pV) {
         if (uv0Offset == -1) {
             return this;
         }
@@ -94,12 +96,12 @@ public class MeshCollector implements VertexConsumer {
     }
 
     @Override
-    public VertexConsumer setUv1(int pU, int pV) {
+    public VertexConsumer overlayCoords(int pU, int pV) {
         return this;
     }
 
     @Override
-    public VertexConsumer setUv2(int pU, int pV) {
+    public VertexConsumer uv2(int pU, int pV) {
         if (uv2Offset == -1) {
             return this;
         }
@@ -115,7 +117,7 @@ public class MeshCollector implements VertexConsumer {
     }
 
     @Override
-    public VertexConsumer setNormal(
+    public VertexConsumer normal(
             float pNormalX,
             float pNormalY,
             float pNormalZ
@@ -136,7 +138,59 @@ public class MeshCollector implements VertexConsumer {
     }
 
     @Override
-    public void addVertex(
+    public void endVertex() {
+
+    }
+
+    @Override
+    public void vertex(
+        float x,
+        float y,
+        float z,
+        float red,
+        float green,
+        float blue,
+        float alpha,
+        float texU,
+        float texV,
+        int overlayUV,
+        int lightmapUV,
+        float normalX,
+        float normalY,
+        float normalZ
+    ) {
+        vertex(
+            x,
+            y,
+            z,
+            FastColor.ARGB32.color(
+                (int) (alpha * 255),
+                (int) (red * 255),
+                (int) (green * 255),
+                (int) (blue * 255)
+            ),
+            texU,
+            texV,
+            overlayUV,
+            lightmapUV,
+            normalX,
+            normalY,
+            normalZ
+        );
+
+    }
+
+    @Override
+    public void defaultColor(int defaultR, int defaultG, int defaultB, int defaultA) {
+
+    }
+
+    @Override
+    public void unsetDefaultColor() {
+
+    }
+
+    public void vertex(
             float pX,
             float pY,
             float pZ,
@@ -157,7 +211,7 @@ public class MeshCollector implements VertexConsumer {
         MemoryUtil.memPutFloat(vertexAddress + posOffset + 8L, pZ);
 
         if (colorOffset != -1L) {
-            MemoryUtil.memPutInt(vertexAddress + colorOffset + 0L, FastColor.ABGR32.fromArgb32(pColor));
+            MemoryUtil.memPutInt(vertexAddress + colorOffset + 0L, ColorUtils.ARGB32toABGR32(pColor));
         }
 
         if (uv0Offset != -1L) {

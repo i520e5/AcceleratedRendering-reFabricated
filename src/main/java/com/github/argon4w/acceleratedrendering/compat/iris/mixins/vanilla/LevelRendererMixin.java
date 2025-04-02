@@ -3,8 +3,8 @@ package com.github.argon4w.acceleratedrendering.compat.iris.mixins.vanilla;
 import com.github.argon4w.acceleratedrendering.core.CoreBuffers;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -20,14 +20,15 @@ public class LevelRendererMixin {
 
     @Inject(method = "renderLevel", at = @At(value = "CONSTANT", args = "stringValue=translucent"))
     public void drawIrisCoreBuffers(
-            DeltaTracker pDeltaTracker,
-            boolean pRenderBlockOutline,
-            Camera pCamera,
-            GameRenderer pGameRenderer,
-            LightTexture pLightTexture,
-            Matrix4f pFrustumMatrix,
-            Matrix4f pProjectionMatrix,
-            CallbackInfo ci
+        PoseStack poseStack,
+        float partialTick,
+        long finishNanoTime,
+        boolean renderBlockOutline,
+        Camera camera,
+        GameRenderer gameRenderer,
+        LightTexture lightTexture,
+        Matrix4f projectionMatrix,
+        CallbackInfo ci
     ) {
         CoreBuffers.ENTITY.drawBuffers();
         CoreBuffers.BLOCK.drawBuffers();

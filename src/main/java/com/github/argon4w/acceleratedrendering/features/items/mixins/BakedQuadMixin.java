@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.util.FastColor;
 import net.neoforged.neoforge.client.model.IQuadTransformer;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -25,21 +26,25 @@ import java.util.Map;
 @Mixin(BakedQuad.class)
 public abstract class BakedQuadMixin implements IAcceleratedBakedQuad {
 
-    @Unique private static final Map<int[], Map<IBufferGraph, IMesh>> MESHES = new LazyMap<>(new Reference2ObjectOpenHashMap<>(), Object2ObjectOpenHashMap::new);
+    @Unique
+    private static final Map<int[], Map<IBufferGraph, IMesh>> MESHES = new LazyMap<>(new Reference2ObjectOpenHashMap<>(), Object2ObjectOpenHashMap::new);
 
-    @Shadow @Final protected int[] vertices;
+    @Shadow
+    @Final
+    protected int[] vertices;
 
-    @Shadow public abstract boolean isTinted();
+    @Shadow
+    public abstract boolean isTinted();
 
     @Unique
     @Override
     public void renderFast(
-            Matrix4f transform,
-            Matrix3f normal,
-            IAcceleratedVertexConsumer extension,
-            int combinedLight,
-            int combinedOverlay,
-            int color
+        Matrix4f transform,
+        Matrix3f normal,
+        IAcceleratedVertexConsumer extension,
+        int combinedLight,
+        int combinedOverlay,
+        int color
     ) {
         IBufferGraph bufferGraph = extension.getBufferGraph();
         RenderType renderType = extension.getRenderType();
@@ -49,10 +54,10 @@ public abstract class BakedQuadMixin implements IAcceleratedBakedQuad {
 
         if (mesh != null) {
             mesh.write(
-                    extension,
-                    getCustomColor(color),
-                    combinedLight,
-                    combinedOverlay
+                extension,
+                getCustomColor(color),
+                combinedLight,
+                combinedOverlay
             );
             return;
         }
@@ -69,34 +74,41 @@ public abstract class BakedQuadMixin implements IAcceleratedBakedQuad {
             int normalOffset = vertexOffset + IQuadTransformer.NORMAL;
             int packedNormal = vertices[normalOffset];
 
-            mesBuilder.addVertex(
-                    Float.intBitsToFloat(vertices[posOffset + 0]),
-                    Float.intBitsToFloat(vertices[posOffset + 1]),
-                    Float.intBitsToFloat(vertices[posOffset + 2]),
-                    vertices[colorOffset],
-                    Float.intBitsToFloat(vertices[uv0Offset + 0]),
-                    Float.intBitsToFloat(vertices[uv0Offset + 1]),
-                    combinedOverlay,
-                    vertices[uv2Offset],
-                    ((byte) (packedNormal & 0xFF)) / 127.0f,
-                    ((byte) ((packedNormal >> 8) & 0xFF)) / 127.0f,
-                    ((byte) ((packedNormal >> 16) & 0xFF)) / 127.0f
+            int packedColor = vertices[colorOffset];
+
+            int r = FastColor.ARGB32.red(packedColor);
+            int g = FastColor.ARGB32.green(packedColor);
+            int b = FastColor.ARGB32.blue(packedColor);
+            int a = FastColor.ARGB32.alpha(packedColor);
+
+            mesBuilder.vertex(
+                Float.intBitsToFloat(vertices[posOffset + 0]),
+                Float.intBitsToFloat(vertices[posOffset + 1]),
+                Float.intBitsToFloat(vertices[posOffset + 2]),
+                r, g, b, a,
+                Float.intBitsToFloat(vertices[uv0Offset + 0]),
+                Float.intBitsToFloat(vertices[uv0Offset + 1]),
+                combinedOverlay,
+                vertices[uv2Offset],
+                ((byte) (packedNormal & 0xFF)) / 127.0f,
+                ((byte) ((packedNormal >> 8) & 0xFF)) / 127.0f,
+                ((byte) ((packedNormal >> 16) & 0xFF)) / 127.0f
             );
         }
 
         meshCollectorCuller.flush();
 
         mesh = AcceleratedItemRenderingFeature
-                .getMeshType()
-                .getBuilder()
-                .build(meshCollectorCuller.getMeshCollector());
+            .getMeshType()
+            .getBuilder()
+            .build(meshCollectorCuller.getMeshCollector());
 
         meshes.put(bufferGraph, mesh);
         mesh.write(
-                extension,
-                getCustomColor(color),
-                combinedLight,
-                combinedOverlay
+            extension,
+            getCustomColor(color),
+            combinedLight,
+            combinedOverlay
         );
     }
 

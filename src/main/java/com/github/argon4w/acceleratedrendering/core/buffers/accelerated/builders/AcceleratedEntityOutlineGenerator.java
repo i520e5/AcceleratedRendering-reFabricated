@@ -107,37 +107,37 @@ public class AcceleratedEntityOutlineGenerator implements IAcceleratedVertexCons
     }
 
     @Override
-    public VertexConsumer addVertex(
-            float pX,
-            float pY,
-            float pZ
+    public VertexConsumer vertex(
+            double pX,
+            double pY,
+            double pZ
     ) {
-        delegate.addVertex(
+        delegate.vertex(
                 pX,
                 pY,
                 pZ
-        ).setColor(color);
+        ).color(color);
         return this;
     }
 
     @Override
-    public VertexConsumer addVertex(
-            PoseStack.Pose pPose,
+    public VertexConsumer vertex(
+            Matrix4f pPose,
             float pX,
             float pY,
             float pZ
     ) {
-        delegate.addVertex(
+        delegate.vertex(
                 pPose,
                 pX,
                 pY,
                 pZ
-        ).setColor(color);
+        ).color(color);
         return this;
     }
 
     @Override
-    public VertexConsumer setColor(
+    public VertexConsumer color(
             int pRed,
             int pGreen,
             int pBlue,
@@ -147,23 +147,23 @@ public class AcceleratedEntityOutlineGenerator implements IAcceleratedVertexCons
     }
 
     @Override
-    public VertexConsumer setUv(float pU, float pV) {
-        delegate.setUv(pU, pV);
+    public VertexConsumer uv(float pU, float pV) {
+        delegate.uv(pU, pV);
         return this;
     }
 
     @Override
-    public VertexConsumer setUv1(int pU, int pV) {
+    public VertexConsumer overlayCoords(int pU, int pV) {
         return this;
     }
 
     @Override
-    public VertexConsumer setUv2(int pU, int pV) {
+    public VertexConsumer uv2(int pU, int pV) {
         return this;
     }
 
     @Override
-    public VertexConsumer setNormal(
+    public VertexConsumer normal(
             float pNormalX,
             float pNormalY,
             float pNormalZ
@@ -172,8 +172,23 @@ public class AcceleratedEntityOutlineGenerator implements IAcceleratedVertexCons
     }
 
     @Override
-    public VertexConsumer setNormal(
-            PoseStack.Pose pPose,
+    public void endVertex() {
+        delegate.endVertex();
+    }
+
+    @Override
+    public void defaultColor(int defaultR, int defaultG, int defaultB, int defaultA) {
+        delegate.defaultColor(defaultR, defaultG, defaultB, defaultA);
+    }
+
+    @Override
+    public void unsetDefaultColor() {
+        delegate.unsetDefaultColor();
+    }
+
+    @Override
+    public VertexConsumer normal(
+            Matrix3f pPose,
             float pNormalX,
             float pNormalY,
             float pNormalZ

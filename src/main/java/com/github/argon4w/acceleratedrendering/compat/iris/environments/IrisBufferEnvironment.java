@@ -12,6 +12,7 @@ import com.github.argon4w.acceleratedrendering.core.programs.extras.CompositeExt
 import com.github.argon4w.acceleratedrendering.core.programs.extras.IExtraVertexData;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.IPolygonProcessor;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.LoadPolygonProcessorEvent;
+import com.github.argon4w.acceleratedrendering.core.extensions.VertexFormatExtension;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import net.irisshaders.iris.api.v0.IrisApi;
@@ -171,7 +172,7 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 
         @Override
         public int getOffset(VertexFormatElement element) {
-            return irisVertexFormat.getOffset(element);
+            return VertexFormatExtension.of(irisVertexFormat).getOffset(element);
         }
 
         @Override

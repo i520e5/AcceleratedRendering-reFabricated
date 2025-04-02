@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.resources.model.SimpleBakedModel;
 import net.minecraft.core.Direction;
+import net.minecraft.util.FastColor;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,38 +37,40 @@ import java.util.Map;
 @Mixin(SimpleBakedModel.class)
 public abstract class SimpleBakedModelMixin implements IAcceleratedBakedModel, IAcceleratedRenderer<AcceleratedItemRenderContext> {
 
-    @Shadow public abstract List<BakedQuad> getQuads(BlockState pState, Direction pDirection, RandomSource pRandom);
+    @Shadow
+    public abstract List<BakedQuad> getQuads(BlockState pState, Direction pDirection, RandomSource pRandom);
 
-    @Unique private final Map<IBufferGraph, Int2ObjectMap<IMesh>> meshes = new Object2ObjectOpenHashMap<>();
+    @Unique
+    private final Map<IBufferGraph, Int2ObjectMap<IMesh>> meshes = new Object2ObjectOpenHashMap<>();
 
     @Override
     public void renderItemFast(ItemStack itemStack, PoseStack poseStack, IAcceleratedVertexConsumer extension, int combinedLight, int combinedOverlay) {
         PoseStack.Pose pose = poseStack.last();
 
         extension.doRender(
-                this,
-                new AcceleratedItemRenderContext(
-                        itemStack,
-                        null,
-                        null
-                ),
-                pose.pose(),
-                pose.normal(),
-                combinedLight,
-                combinedOverlay,
-                -1
+            this,
+            new AcceleratedItemRenderContext(
+                itemStack,
+                null,
+                null
+            ),
+            pose.pose(),
+            pose.normal(),
+            combinedLight,
+            combinedOverlay,
+            -1
         );
     }
 
     @Override
     public void render(
-            VertexConsumer vertexConsumer,
-            AcceleratedItemRenderContext context,
-            Matrix4f transform,
-            Matrix3f normal,
-            int light,
-            int overlay,
-            int color
+        VertexConsumer vertexConsumer,
+        AcceleratedItemRenderContext context,
+        Matrix4f transform,
+        Matrix3f normal,
+        int light,
+        int overlay,
+        int color
     ) {
         ItemStack itemStack = context.getItemStack();
         ItemColor itemColor = context.getItemColor();
@@ -85,10 +88,10 @@ public abstract class SimpleBakedModelMixin implements IAcceleratedBakedModel, I
                 IMesh mesh = layers.get(layer);
 
                 mesh.write(
-                        extension,
-                        getCustomColor(layer, itemColor.getColor(itemStack, layer)),
-                        light,
-                        overlay
+                    extension,
+                    getCustomColor(layer, itemColor.getColor(itemStack, layer)),
+                    light,
+                    overlay
                 );
             }
 
@@ -127,18 +130,25 @@ public abstract class SimpleBakedModelMixin implements IAcceleratedBakedModel, I
                         normalZ = quad.getDirection().getNormal().getZ();
                     }
 
-                    meshBuilder.addVertex(
-                            Float.intBitsToFloat(data[posOffset + 0]),
-                            Float.intBitsToFloat(data[posOffset + 1]),
-                            Float.intBitsToFloat(data[posOffset + 2]),
-                            data[colorOffset],
-                            Float.intBitsToFloat(data[uv0Offset + 0]),
-                            Float.intBitsToFloat(data[uv0Offset + 1]),
-                            -1,
-                            data[uv2Offset],
-                            normalX,
-                            normalY,
-                            normalZ
+                    int packedColor = data[colorOffset];
+
+                    int r = FastColor.ARGB32.red(packedColor);
+                    int g = FastColor.ARGB32.green(packedColor);
+                    int b = FastColor.ARGB32.blue(packedColor);
+                    int a = FastColor.ARGB32.alpha(packedColor);
+
+                    meshBuilder.vertex(
+                        Float.intBitsToFloat(data[posOffset + 0]),
+                        Float.intBitsToFloat(data[posOffset + 1]),
+                        Float.intBitsToFloat(data[posOffset + 2]),
+                        r, g, b, a,
+                        Float.intBitsToFloat(data[uv0Offset + 0]),
+                        Float.intBitsToFloat(data[uv0Offset + 1]),
+                        -1,
+                        data[uv2Offset],
+                        normalX,
+                        normalY,
+                        normalZ
                     );
                 }
             }
@@ -149,16 +159,16 @@ public abstract class SimpleBakedModelMixin implements IAcceleratedBakedModel, I
             meshCollectorCuller.flush();
 
             IMesh mesh = AcceleratedItemRenderingFeature
-                    .getMeshType()
-                    .getBuilder()
-                    .build(meshCollectorCuller.getMeshCollector());
+                .getMeshType()
+                .getBuilder()
+                .build(meshCollectorCuller.getMeshCollector());
 
             layers.put(layer, mesh);
             mesh.write(
-                    extension,
-                    getCustomColor(layer, itemColor.getColor(itemStack, layer)),
-                    light,
-                    overlay
+                extension,
+                getCustomColor(layer, itemColor.getColor(itemStack, layer)),
+                light,
+                overlay
             );
         }
 

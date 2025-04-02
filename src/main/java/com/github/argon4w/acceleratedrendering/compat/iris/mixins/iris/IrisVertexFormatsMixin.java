@@ -1,7 +1,9 @@
 package com.github.argon4w.acceleratedrendering.compat.iris.mixins.iris;
 
+import com.google.common.collect.ImmutableMap;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import net.irisshaders.iris.vertices.IrisVertexFormats;
@@ -23,37 +25,36 @@ public class IrisVertexFormatsMixin {
 
     @WrapOperation(method = "<clinit>", at = @At(value = "FIELD", target = "Lnet/irisshaders/iris/vertices/IrisVertexFormats;ENTITY:Lcom/mojang/blaze3d/vertex/VertexFormat;", opcode = Opcodes.PUTSTATIC))
     private static void addPaddingForEntityFormat(VertexFormat value, Operation<Void> original) {
-        original.call(VertexFormat
-                .builder()
-                .add("Position", VertexFormatElement.POSITION)
-                .add("Color", VertexFormatElement.COLOR)
-                .add("UV0", VertexFormatElement.UV0)
-                .add("UV1", VertexFormatElement.UV1)
-                .add("UV2", VertexFormatElement.UV2)
-                .add("Normal", VertexFormatElement.NORMAL)
-                .padding(1)
-                .add("iris_Entity", ENTITY_ID_ELEMENT)
-                .padding(2)
-                .add("mc_midTexCoord", MID_TEXTURE_ELEMENT)
-                .add("at_tangent", TANGENT_ELEMENT)
-                .build()
-        );
+        ImmutableMap.Builder<String, VertexFormatElement> builder = ImmutableMap.builder();
+        builder.put("Position", DefaultVertexFormat.ELEMENT_POSITION);
+        builder.put("Color", DefaultVertexFormat.ELEMENT_COLOR);
+        builder.put("UV0", DefaultVertexFormat.ELEMENT_UV0);
+        builder.put("UV1", DefaultVertexFormat.ELEMENT_UV1);
+        builder.put("UV2", DefaultVertexFormat.ELEMENT_UV2);
+        builder.put("Normal", DefaultVertexFormat.ELEMENT_NORMAL);
+        builder.put("Padding1", DefaultVertexFormat.ELEMENT_PADDING);
+        builder.put("iris_Entity", ENTITY_ID_ELEMENT);
+        builder.put("Padding2x1", DefaultVertexFormat.ELEMENT_PADDING);
+        builder.put("Padding2x2", DefaultVertexFormat.ELEMENT_PADDING);
+        builder.put("mc_midTexCoord", MID_TEXTURE_ELEMENT);
+        builder.put("at_tangent", TANGENT_ELEMENT);
+        original.call(new VertexFormat(builder.build()));
     }
 
     @WrapOperation(method = "<clinit>", at = @At(value = "FIELD", target = "Lnet/irisshaders/iris/vertices/IrisVertexFormats;GLYPH:Lcom/mojang/blaze3d/vertex/VertexFormat;", opcode = Opcodes.PUTSTATIC))
     private static void addPaddingForGlyphFormat(VertexFormat value, Operation<Void> original) {
-        original.call(VertexFormat
-                .builder()
-                .add("Position", VertexFormatElement.POSITION)
-                .add("Color", VertexFormatElement.COLOR)
-                .add("UV0", VertexFormatElement.UV0)
-                .add("UV2", VertexFormatElement.UV2)
-                .add("Normal", VertexFormatElement.NORMAL)
-                .padding(1)
-                .add("iris_Entity", ENTITY_ID_ELEMENT)
-                .padding(2)
-                .add("mc_midTexCoord", MID_TEXTURE_ELEMENT)
-                .add("at_tangent", TANGENT_ELEMENT)
-                .build());
+        ImmutableMap.Builder<String, VertexFormatElement> builder = ImmutableMap.builder();
+        builder.put("Position", DefaultVertexFormat.ELEMENT_POSITION);
+        builder.put("Color", DefaultVertexFormat.ELEMENT_COLOR);
+        builder.put("UV0", DefaultVertexFormat.ELEMENT_UV0);
+        builder.put("UV2", DefaultVertexFormat.ELEMENT_UV2);
+        builder.put("Normal", DefaultVertexFormat.ELEMENT_NORMAL);
+        builder.put("Padding1", DefaultVertexFormat.ELEMENT_PADDING);
+        builder.put("iris_Entity", ENTITY_ID_ELEMENT);
+        builder.put("Padding2x1", DefaultVertexFormat.ELEMENT_PADDING);
+        builder.put("Padding2x2", DefaultVertexFormat.ELEMENT_PADDING);
+        builder.put("mc_midTexCoord", MID_TEXTURE_ELEMENT);
+        builder.put("at_tangent", TANGENT_ELEMENT);
+        original.call(new VertexFormat(builder.build()));
     }
 }

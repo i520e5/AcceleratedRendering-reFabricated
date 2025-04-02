@@ -2,7 +2,7 @@ package com.github.argon4w.acceleratedrendering.core.meshes;
 
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IAcceleratedVertexConsumer;
 import com.github.argon4w.acceleratedrendering.core.meshes.collectors.MeshCollector;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
+import com.github.argon4w.acceleratedrendering.core.utils.ByteBufferBuilder;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
 import java.nio.ByteBuffer;
@@ -61,7 +61,7 @@ public class ClientMesh implements IMesh {
             }
 
             builders.add(builder);
-            return new ClientMesh(vertexCount, result.byteBuffer());
+            return new ClientMesh(vertexCount, result.createBuffer());
         }
 
         @Override

@@ -29,13 +29,13 @@ public class AcceleratedBakedGlyphRenderer implements IAcceleratedRenderer<Void>
 
     @Override
     public void render(
-            VertexConsumer vertexConsumer,
-            Void context,
-            Matrix4f transform,
-            Matrix3f normal,
-            int light,
-            int overlay,
-            int color
+        VertexConsumer vertexConsumer,
+        Void context,
+        Matrix4f transform,
+        Matrix3f normal,
+        int light,
+        int overlay,
+        int color
     ) {
         IAcceleratedVertexConsumer extension = (IAcceleratedVertexConsumer) vertexConsumer;
 
@@ -48,10 +48,10 @@ public class AcceleratedBakedGlyphRenderer implements IAcceleratedRenderer<Void>
 
         if (mesh != null) {
             mesh.write(
-                    extension,
-                    color,
-                    light,
-                    overlay
+                extension,
+                color,
+                light,
+                overlay
             );
 
             extension.endTransform();
@@ -61,87 +61,88 @@ public class AcceleratedBakedGlyphRenderer implements IAcceleratedRenderer<Void>
         MeshCollector meshCollector = new MeshCollector(renderType.format);
 
         addGlyphQuad(
-                extension.decorate(meshCollector),
-                italic,
-                bakedGlyph,
-                new Vector3f()
+            extension.decorate(meshCollector),
+            italic,
+            bakedGlyph,
+            new Vector3f()
         );
 
         mesh = AcceleratedTextRenderingFeature
-                .getMeshType()
-                .getBuilder()
-                .build(meshCollector);
+            .getMeshType()
+            .getBuilder()
+            .build(meshCollector);
 
         meshes.put(bufferGraph, mesh);
         mesh.write(
-                extension,
-                color,
-                light,
-                overlay
+            extension,
+            color,
+            light,
+            overlay
         );
 
         extension.endTransform();
     }
 
     public static void addGlyphQuad(
-            VertexConsumer vertexConsumer,
-            boolean italic,
-            BakedGlyph glyph,
-            Vector3f offset
+        VertexConsumer vertexConsumer,
+        boolean italic,
+        BakedGlyph glyph,
+        Vector3f offset
     ) {
         float italicOffsetUp = italic ? 1.0f - 0.25f * glyph.up : 0.0f;
         float italicOffsetDown = italic ? 1.0f - 0.25f * glyph.down : 0.0f;
 
         addGlyphVertex(
-                vertexConsumer,
-                offset.x + glyph.left + italicOffsetUp,
-                offset.y + glyph.up,
-                offset.z,
-                glyph.u0,
-                glyph.v0
+            vertexConsumer,
+            offset.x + glyph.left + italicOffsetUp,
+            offset.y + glyph.up,
+            offset.z,
+            glyph.u0,
+            glyph.v0
         );
         addGlyphVertex(
-                vertexConsumer,
-                offset.x + glyph.left + italicOffsetDown,
-                offset.y + glyph.down,
-                offset.z,
-                glyph.u0,
-                glyph.v1
+            vertexConsumer,
+            offset.x + glyph.left + italicOffsetDown,
+            offset.y + glyph.down,
+            offset.z,
+            glyph.u0,
+            glyph.v1
         );
         addGlyphVertex(
-                vertexConsumer,
-                offset.x + glyph.right + italicOffsetDown,
-                offset.y + glyph.down,
-                offset.z,
-                glyph.u1,
-                glyph.v1
+            vertexConsumer,
+            offset.x + glyph.right + italicOffsetDown,
+            offset.y + glyph.down,
+            offset.z,
+            glyph.u1,
+            glyph.v1
         );
         addGlyphVertex(
-                vertexConsumer,
-                offset.x + glyph.right + italicOffsetUp,
-                offset.y + glyph.up,
-                offset.z,
-                glyph.u1,
-                glyph.v0
+            vertexConsumer,
+            offset.x + glyph.right + italicOffsetUp,
+            offset.y + glyph.up,
+            offset.z,
+            glyph.u1,
+            glyph.v0
         );
     }
 
     public static void addGlyphVertex(
-            VertexConsumer vertexConsumer,
-            float positionX,
-            float positionY,
-            float positionZ,
-            float u,
-            float v
+        VertexConsumer vertexConsumer,
+        float positionX,
+        float positionY,
+        float positionZ,
+        float u,
+        float v
     ) {
         vertexConsumer
-                .addVertex(
-                        positionX,
-                        positionY,
-                        positionZ
-                )
-                .setColor(-1)
-                .setUv(u, v)
-                .setLight(0);
+            .vertex(
+                positionX,
+                positionY,
+                positionZ
+            )
+            .color(-1)
+            .uv(u, v)
+            .uv2(0, 0)
+            .endVertex();
     }
 }

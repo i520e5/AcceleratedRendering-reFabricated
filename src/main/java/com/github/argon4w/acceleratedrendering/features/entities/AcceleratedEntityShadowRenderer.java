@@ -22,13 +22,13 @@ public class AcceleratedEntityShadowRenderer implements IAcceleratedRenderer<Acc
     @Unique
     @Override
     public void render(
-            VertexConsumer vertexConsumer,
-            Context context,
-            Matrix4f transform,
-            Matrix3f normal,
-            int light,
-            int overlay,
-            int color
+        VertexConsumer vertexConsumer,
+        Context context,
+        Matrix4f transform,
+        Matrix3f normal,
+        int light,
+        int overlay,
+        int color
     ) {
         IAcceleratedVertexConsumer extension = (IAcceleratedVertexConsumer) vertexConsumer;
 
@@ -72,8 +72,10 @@ public class AcceleratedEntityShadowRenderer implements IAcceleratedRenderer<Acc
         if (shadowTransparency > 255.0F) {
             shadowTransparency = 255.0F;
         }
+        int r = FastColor.ARGB32.red(color);
+        int g = FastColor.ARGB32.green(color);
+        int b = FastColor.ARGB32.blue(color);
 
-        int shadowColor = FastColor.ARGB32.color((int) shadowTransparency, color);
         AABB bounds = voxelShape.bounds();
 
         float minX = blockPos.getX() + (float) bounds.minX;
@@ -95,60 +97,72 @@ public class AcceleratedEntityShadowRenderer implements IAcceleratedRenderer<Acc
 
         extension.beginTransform(transform, normal);
 
-        vertexConsumer.addVertex(
-                minPosX,
-                minPosY,
-                minPosZ,
-                shadowColor,
-                u0,
-                v0,
-                overlay,
-                light,
-                0.0f,
-                1.0f,
-                0.0f
+        vertexConsumer.vertex(
+            minPosX,
+            minPosY,
+            minPosZ,
+            r,
+            g,
+            b,
+            shadowTransparency,
+            u0,
+            v0,
+            overlay,
+            light,
+            0.0f,
+            1.0f,
+            0.0f
         );
 
-        vertexConsumer.addVertex(
-                minPosX,
-                minPosY,
-                maxPosZ,
-                shadowColor,
-                u0,
-                v1,
-                overlay,
-                light,
-                0.0f,
-                1.0f,
-                0.0f
+        vertexConsumer.vertex(
+            minPosX,
+            minPosY,
+            maxPosZ,
+            r,
+            g,
+            b,
+            shadowTransparency,
+            u0,
+            v1,
+            overlay,
+            light,
+            0.0f,
+            1.0f,
+            0.0f
         );
 
-        vertexConsumer.addVertex(
-                maxPosX,
-                minPosY,
-                maxPosZ,
-                shadowColor,
-                u1,
-                v1,
-                overlay,
-                light,
-                0.0f,
-                1.0f,
-                0.0f
+        vertexConsumer.vertex(
+            maxPosX,
+            minPosY,
+            maxPosZ,
+            r,
+            g,
+            b,
+            shadowTransparency,
+            u1,
+            v1,
+            overlay,
+            light,
+            0.0f,
+            1.0f,
+            0.0f
         );
 
-        vertexConsumer.addVertex(
-                maxPosX,
-                minPosY,
-                minPosZ,
-                shadowColor,
-                u1,
-                v0,
-                overlay,
-                light,
-                0.0f,
-                1.0f,
-                0.0f
+        vertexConsumer.vertex(
+            maxPosX,
+            minPosY,
+            minPosZ,
+            r,
+            g,
+            b,
+            shadowTransparency,
+            u1,
+            v0,
+            overlay,
+            light,
+            0.0f,
+            1.0f,
+            0.0f
         );
 
         extension.endTransform();
@@ -164,12 +178,12 @@ public class AcceleratedEntityShadowRenderer implements IAcceleratedRenderer<Acc
         private final float weight;
 
         public Context(
-                LevelReader levelReader,
-                ChunkAccess chunkAccess,
-                BlockPos blockPos,
-                Vector3f position,
-                float size,
-                float weight
+            LevelReader levelReader,
+            ChunkAccess chunkAccess,
+            BlockPos blockPos,
+            Vector3f position,
+            float size,
+            float weight
         ) {
             this.levelReader = levelReader;
             this.chunkAccess = chunkAccess;

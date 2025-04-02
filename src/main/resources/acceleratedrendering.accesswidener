@@ -28,7 +28,7 @@ accessible field net/minecraft/client/renderer/RenderStateShard setupState Ljava
 accessible field net/minecraft/client/renderer/RenderStateShard clearState Ljava/lang/Runnable;
 accessible class net/minecraft/client/renderer/OutlineBufferSource$EntityOutlineGenerator
 accessible class com/mojang/blaze3d/vertex/VertexMultiConsumer$Double
-accessible method net/minecraft/client/renderer/OutlineBufferSource$EntityOutlineGenerator <init> (Lcom/mojang/blaze3d/vertex/VertexConsumer;I)V
+accessible method net/minecraft/client/renderer/OutlineBufferSource$EntityOutlineGenerator <init> (Lcom/mojang/blaze3d/vertex/VertexConsumer;IIII)V
 
 accessible field net/minecraft/client/gui/font/glyphs/BakedGlyph up F
 accessible field net/minecraft/client/gui/font/glyphs/BakedGlyph down F
@@ -39,3 +39,5 @@ accessible field net/minecraft/client/gui/font/glyphs/BakedGlyph v0 F
 accessible field net/minecraft/client/gui/font/glyphs/BakedGlyph u1 F
 accessible field net/minecraft/client/gui/font/glyphs/BakedGlyph v1 F
 accessible field net/minecraft/client/renderer/RenderStateShard$BooleanStateShard enabled Z
+accessible field com/mojang/blaze3d/vertex/VertexFormat offsets Lit/unimi/dsi/fastutil/ints/IntList;
+accessible field net/minecraft/client/renderer/LevelRenderer destructionProgress Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;

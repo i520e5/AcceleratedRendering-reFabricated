@@ -126,16 +126,16 @@ public class AcceleratedSheetedDecalTextureGenerator implements IAcceleratedVert
     }
 
     @Override
-    public VertexConsumer addVertex(
-            float pX,
-            float pY,
-            float pZ
+    public VertexConsumer vertex(
+            double pX,
+            double pY,
+            double pZ
     ) {
-        vertexX = pX;
-        vertexY = pY;
-        vertexZ = pZ;
+        vertexX = (float) pX;
+        vertexY = (float) pY;
+        vertexZ = (float) pZ;
 
-        delegate.addVertex(
+        delegate.vertex(
                 pX,
                 pY,
                 pZ
@@ -144,40 +144,40 @@ public class AcceleratedSheetedDecalTextureGenerator implements IAcceleratedVert
     }
 
     @Override
-    public VertexConsumer setUv(float pU, float pV) {
+    public VertexConsumer uv(float pU, float pV) {
         return this;
     }
 
     @Override
-    public VertexConsumer setUv1(int pU, int pV) {
-        delegate.setUv1(pU, pV);
+    public VertexConsumer overlayCoords(int pU, int pV) {
+        delegate.overlayCoords(pU, pV);
         return this;
     }
 
     @Override
-    public VertexConsumer setUv2(int pU, int pV) {
-        delegate.setUv2(pU, pV);
+    public VertexConsumer uv2(int pU, int pV) {
+        delegate.uv2(pU, pV);
         return this;
     }
 
     @Override
-    public VertexConsumer setColor(
+    public VertexConsumer color(
             int pRed,
             int pGreen,
             int pBlue,
             int pAlpha
     ) {
-        delegate.setColor(-1);
+        delegate.color(-1);
         return this;
     }
 
     @Override
-    public VertexConsumer setNormal(
+    public VertexConsumer normal(
             float pNormalX,
             float pNormalY,
             float pNormalZ
     ) {
-        delegate.setNormal(
+        delegate.normal(
                 pNormalX,
                 pNormalY,
                 pNormalZ
@@ -207,8 +207,23 @@ public class AcceleratedSheetedDecalTextureGenerator implements IAcceleratedVert
         camera.rotateX((float) (-Math.PI / 2));
         camera.rotate(direction.getRotation());
 
-        delegate.setUv(-camera.x() * textureScale, -camera.y() * textureScale);
+        delegate.uv(-camera.x() * textureScale, -camera.y() * textureScale);
         return this;
+    }
+
+    @Override
+    public void endVertex() {
+        delegate.endVertex();
+    }
+
+    @Override
+    public void defaultColor(int defaultR, int defaultG, int defaultB, int defaultA) {
+        delegate.defaultColor(defaultR, defaultG, defaultB, defaultA);
+    }
+
+    @Override
+    public void unsetDefaultColor() {
+        delegate.unsetDefaultColor();
     }
 
     @Override

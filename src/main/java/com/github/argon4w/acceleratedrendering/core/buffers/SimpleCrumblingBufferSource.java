@@ -21,8 +21,9 @@ public class SimpleCrumblingBufferSource implements MultiBufferSource {
         this.bufferSource = bufferSource;
         this.crumblingBuffer = new SheetedDecalTextureGenerator(
                 crumblingBuffer,
-                globalTransform,
-                textureScale
+                globalTransform.pose(),
+                globalTransform.normal(),
+            textureScale
         );
     }
 

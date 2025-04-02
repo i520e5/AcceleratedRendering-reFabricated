@@ -3,8 +3,8 @@ package com.github.argon4w.acceleratedrendering.core.meshes;
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffer;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IAcceleratedVertexConsumer;
 import com.github.argon4w.acceleratedrendering.core.meshes.collectors.MeshCollector;
+import com.github.argon4w.acceleratedrendering.core.utils.ByteBufferBuilder;
 import com.github.argon4w.acceleratedrendering.core.utils.LazyMap;
-import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import org.lwjgl.system.MemoryUtil;
 
@@ -63,7 +63,7 @@ public class ServerMesh implements IMesh {
                 return EmptyMesh.INSTANCE;
             }
 
-            ByteBuffer clientBuffer = result.byteBuffer();
+            ByteBuffer clientBuffer = result.createBuffer();
             MappedBuffer serverBuffer = storageBuffers.get(collector.getVertexFormat());
 
             long capacity = clientBuffer.capacity();
