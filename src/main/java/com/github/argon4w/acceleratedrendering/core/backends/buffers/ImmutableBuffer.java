@@ -92,7 +92,7 @@ public class ImmutableBuffer implements IServerBuffer {
                 GL_R8UI,
                 offset,
                 size,
-                GL_RED,
+                GL_RED_INTEGER,
                 GL_UNSIGNED_BYTE,
                 (ByteBuffer) null
         );
