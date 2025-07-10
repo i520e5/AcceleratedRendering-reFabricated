@@ -86,7 +86,7 @@ public class ImmutableBuffer implements IServerBuffer {
 			);
 		}
 	}
-
+	
 	@Override
 	public void clearBytes(long offset, long size) {
 		glClearNamedBufferSubData(
@@ -94,7 +94,7 @@ public class ImmutableBuffer implements IServerBuffer {
 				GL_R8UI,
 				offset,
 				size,
-				GL_RED,
+				GL_RED_INTEGER,
 				GL_UNSIGNED_BYTE,
 				(ByteBuffer) null
 		);
