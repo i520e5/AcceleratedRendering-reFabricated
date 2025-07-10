@@ -1,109 +1,171 @@
 package com.github.argon4w.acceleratedrendering.features.touhoulittlemaid.mixins;
 
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IAcceleratedVertexConsumer;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IBufferGraph;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.VertexConsumerExtension;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
-import com.github.argon4w.acceleratedrendering.core.buffers.graphs.IBufferGraph;
 import com.github.argon4w.acceleratedrendering.core.meshes.IMesh;
-import com.github.argon4w.acceleratedrendering.core.meshes.collectors.MeshCollectorCuller;
+import com.github.argon4w.acceleratedrendering.core.meshes.collectors.CulledMeshCollector;
 import com.github.argon4w.acceleratedrendering.features.entities.AcceleratedEntityRenderingFeature;
 import com.github.tartaricacid.touhoulittlemaid.geckolib3.geo.render.built.GeoBone;
-import com.github.tartaricacid.touhoulittlemaid.geckolib3.geo.render.built.GeoCube;
-import com.github.tartaricacid.touhoulittlemaid.geckolib3.geo.render.built.GeoQuad;
-import com.github.tartaricacid.touhoulittlemaid.geckolib3.geo.render.built.GeoVertex;
+import com.github.tartaricacid.touhoulittlemaid.geckolib3.geo.render.built.GeoMesh;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraft.client.renderer.RenderType;
+import lombok.experimental.ExtensionMethod;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 
-import java.util.List;
 import java.util.Map;
 
-@Mixin(GeoBone.class)
+@ExtensionMethod(VertexConsumerExtension.class)
+@Mixin			(GeoBone				.class)
 public class GeoBoneMixin implements IAcceleratedRenderer<Void> {
 
-    @Shadow @Final private List<GeoCube> cubes;
+	@Shadow @Final private GeoMesh						cubes;
 
-    @Unique private final Map<IBufferGraph, IMesh> meshes = new Object2ObjectOpenHashMap<>();
+	@Unique private final	Map<IBufferGraph, IMesh>	meshes = new Object2ObjectOpenHashMap<>();
 
-    @Override
-    public void render(
-            VertexConsumer vertexConsumer,
-            Void context,
-            Matrix4f transform,
-            Matrix3f normal,
-            int light,
-            int overlay,
-            int color
-    ) {
-        IAcceleratedVertexConsumer extension = ((IAcceleratedVertexConsumer) vertexConsumer);
+	@Unique
+	@Override
+	public void render(
+			VertexConsumer	vertexConsumer,
+			Void			context,
+			Matrix4f		transformMatrix,
+			Matrix3f		normalMatrix,
+			int				light,
+			int				overlay,
+			int				color
+	) {
+		var extension	= vertexConsumer.getAccelerated	();
+		var mesh		= meshes		.get			(extension);
 
-        IBufferGraph bufferGraph = extension.getBufferGraph();
-        RenderType renderType = extension.getRenderType();
+		extension.beginTransform(transformMatrix, normalMatrix);
 
-        IMesh mesh = meshes.get(bufferGraph);
+		if (mesh != null) {
+			mesh.write(
+					extension,
+					color,
+					light,
+					overlay
+			);
 
-        extension.beginTransform(transform, normal);
+			extension.endTransform();
+			return;
+		}
 
-        if (mesh != null) {
-            mesh.write(
-                    extension,
-                    color,
-                    light,
-                    overlay
-            );
+		var culledMeshCollector	= new CulledMeshCollector	(extension.getRenderType(), extension.getBufferSet().getLayout());
+		var meshBuilder			= extension.decorate		(culledMeshCollector);
 
-            extension.endTransform();
-            return;
-        }
+		for(int i = 0; i < cubes.getCubeCount(); ++i) {
+			var deltaX			= new Vector3f	(cubes.dx(i));
+			var deltaY			= new Vector3f	(cubes.dy(i));
+			var deltaZ			= new Vector3f	(cubes.dz(i));
 
-        MeshCollectorCuller meshCollectorCuller = new MeshCollectorCuller(renderType);
-        VertexConsumer meshBuilder = extension.decorate(meshCollectorCuller);
+			var p000			= new Vector3f	(cubes.position(i));
+			var p100			= p000	.add	(deltaX, new Vector3f());
+			var p110			= p100	.add	(deltaY, new Vector3f());
+			var p010			= p000	.add	(deltaY, new Vector3f());
+			var p001			= p000	.add	(deltaZ, new Vector3f());
+			var p101			= p100	.add	(deltaZ, new Vector3f());
+			var p111			= p110	.add	(deltaZ, new Vector3f());
+			var p011			= p010	.add	(deltaZ, new Vector3f());
+			
+			var positiveNormalZ	= deltaX.cross	(deltaY, new Vector3f()).normalize();
+			var positiveNormalX	= deltaY.cross	(deltaZ, new Vector3f()).normalize();
+			var positiveNormalY	= deltaZ.cross	(deltaX, new Vector3f()).normalize();
+			var faces			= cubes	.faces	(i);
+			var mirrored		= (faces & 64) != 0;
 
-        for (GeoCube cube : cubes) {
-            for (GeoQuad quad : cube.quads) {
-                Vector3f polygonNormal = quad.normal;
+			if (mirrored) {
+				positiveNormalX.mul(-1.0F);
+				positiveNormalY.mul(-1.0F);
+				positiveNormalZ.mul(-1.0F);
+			}
 
-                for (GeoVertex vertex : quad.vertices) {
-                    Vector3f vertexPosition = vertex.position;
+			var negativeNormalX	= positiveNormalX.negate(new Vector3f());
+			var negativeNormalY	= positiveNormalY.negate(new Vector3f());
+			var negativeNormalZ	= positiveNormalZ.negate(new Vector3f());
 
-                    meshBuilder.addVertex(
-                            vertexPosition.x,
-                            vertexPosition.y,
-                            vertexPosition.z,
-                            -1,
-                            vertex.textureU,
-                            vertex.textureV,
-                            overlay,
-                            0,
-                            polygonNormal.x,
-                            polygonNormal.y,
-                            polygonNormal.z
-                    );
-                }
-            }
-        }
+			var positions		= new Vector3f[][] {
+					{p101, p001, p000, p100},
+					{p110, p010, p011, p111},
+					{p100, p000, p010, p110},
+					{p001, p101, p111, p011},
+					{p101, p100, p110, p111},
+					{p000, p001, p011, p010}
+			};
 
-        meshCollectorCuller.flush();
+			var texCoords		= new float[][] {
+					{cubes.downU0(i),	cubes.downU1(i),	cubes.downV0(i),	cubes.downV1(i)	},
+					{cubes.upU0(i),		cubes.upU1(i),		cubes.upV0(i),		cubes.upV1(i)	},
+					{cubes.northU0(i),	cubes.northU1(i),	cubes.northV0(i),	cubes.northV1(i)},
+					{cubes.southU0(i),	cubes.southU1(i),	cubes.southV0(i),	cubes.southV1(i)},
+					{cubes.eastU0(i),	cubes.eastU1(i),	cubes.eastV0(i),	cubes.eastV1(i)	},
+					{cubes.westU0(i),	cubes.westU1(i),	cubes.westV0(i),	cubes.westV1(i)	},
+			};
 
-        mesh = AcceleratedEntityRenderingFeature
-                .getMeshType()
-                .getBuilder()
-                .build(meshCollectorCuller.getMeshCollector());
+			var texOrders		= new Vector2i[] {
+					new Vector2i(0, 3),
+					new Vector2i(1, 3),
+					new Vector2i(1, 2),
+					new Vector2i(0, 2)
+			};
 
-        meshes.put(bufferGraph, mesh);
-        mesh.write(
-                extension,
-                color,
-                light,
-                overlay
-        );
+			var normals			= new Vector3f[] {
+					negativeNormalY,
+					positiveNormalY,
+					negativeNormalZ,
+					positiveNormalZ,
+					positiveNormalX,
+					negativeNormalX
+			};
 
-        extension.endTransform();
-    }
+			for (var j = 0; j < 6; j ++) {
+				if ((faces & (1 << j)) != 0) {
+					for (var k = 0; k < 4; k ++) {
+						var position	= positions	[j][k];
+						var texCoord	= texCoords	[j];
+						var texOrder	= texOrders	[k];
+						var normal		= normals	[j];
+
+						meshBuilder.addVertex(
+								position.x,
+								position.y,
+								position.z,
+								color,
+								texCoord[texOrder.x],
+								texCoord[texOrder.y],
+								overlay,
+								light,
+								normal.x,
+								normal.y,
+								normal.z
+						);
+					}
+				}
+			}
+		}
+
+		culledMeshCollector.flush();
+
+		mesh = AcceleratedEntityRenderingFeature
+				.getMeshType()
+				.getBuilder	()
+				.build		(culledMeshCollector);
+
+		meshes	.put	(extension, mesh);
+		mesh	.write	(
+				extension,
+				color,
+				light,
+				overlay
+		);
+
+		extension.endTransform();
+	}
 }

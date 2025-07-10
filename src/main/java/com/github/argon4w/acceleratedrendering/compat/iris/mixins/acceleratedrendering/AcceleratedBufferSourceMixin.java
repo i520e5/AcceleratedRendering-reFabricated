@@ -1,21 +1,24 @@
 package com.github.argon4w.acceleratedrendering.compat.iris.mixins.acceleratedrendering;
 
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSource;
-import com.github.argon4w.acceleratedrendering.core.buffers.environments.IBufferEnvironment;
+import net.irisshaders.batchedentityrendering.impl.WrappableRenderType;
 import net.minecraft.client.renderer.RenderType;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 @Mixin(AcceleratedBufferSource.class)
-public abstract class AcceleratedBufferSourceMixin {
+public class AcceleratedBufferSourceMixin {
 
-    @Shadow @Final private IBufferEnvironment bufferEnvironment;
-
-    @ModifyVariable(method = "getBuffer", at = @At("HEAD"), ordinal = 0, argsOnly = true)
-    public RenderType unwrapIrisRenderType(RenderType renderType) {
-        return bufferEnvironment.getRenderType(renderType);
-    }
+	@ModifyArg(
+			method	= "getBuffer",
+			at		= @At(
+					value	= "INVOKE",
+					target	= "Lcom/github/argon4w/acceleratedrendering/core/buffers/accelerated/builders/AcceleratedBufferBuilder;<init>(Lcom/github/argon4w/acceleratedrendering/core/buffers/accelerated/pools/VertexBufferPool$VertexBuffer;Lcom/github/argon4w/acceleratedrendering/core/buffers/accelerated/pools/MappedBufferPool$Pooled;Lcom/github/argon4w/acceleratedrendering/core/buffers/accelerated/pools/ElementBufferPool$ElementSegment;Lcom/github/argon4w/acceleratedrendering/core/buffers/accelerated/AcceleratedBufferSetPool$BufferSet;Lnet/minecraft/client/renderer/RenderType;)V"
+			),
+			index	= 4
+	)
+	public RenderType unwrapIrisRenderType(RenderType renderType) {
+		return renderType instanceof WrappableRenderType wrapped ? wrapped.unwrap() : renderType;
+	}
 }

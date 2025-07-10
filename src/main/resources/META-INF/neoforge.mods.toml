@@ -64,10 +64,6 @@ config="${mod_id}.feature.entities.mixins.json"
 [[mixins]]
 config="${mod_id}.feature.modelparts.mixins.json"
 
-# Accelerated Block Entity Rendering Feature Mixins
-[[mixins]]
-config="${mod_id}.feature.blocks.mixins.json"
-
 #Accelerated Item Rendering Feature Mixins
 [[mixins]]
 config="${mod_id}.feature.items.mixins.json"
@@ -75,6 +71,10 @@ config="${mod_id}.feature.items.mixins.json"
 # Accelerated Text Rendering Feature Mixins
 [[mixins]]
 config="${mod_id}.feature.text.mixins.json"
+
+#Simple Bedrock Model Acceleration Feature Mixins
+[[mixins]]
+config="${mod_id}.feature.simplebedrockmodel.mixins.json"
 
 # Touhou Little Maid Acceleration Feature Mixins
 [[mixins]]

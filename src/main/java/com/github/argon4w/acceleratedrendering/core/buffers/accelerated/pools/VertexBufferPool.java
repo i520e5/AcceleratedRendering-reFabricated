@@ -4,104 +4,103 @@ import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffe
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.SegmentBuffer;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
 import com.github.argon4w.acceleratedrendering.core.utils.SimpleResetPool;
+import lombok.Getter;
 import org.apache.commons.lang3.mutable.MutableLong;
 
 public class VertexBufferPool extends SimpleResetPool<VertexBufferPool.VertexBuffer, Void> {
 
-    private final AcceleratedBufferSetPool.BufferSet bufferSet;
-    private final SegmentBuffer vertexBufferOut;
-    private final MutableLong vertexBufferSize;
+	private			final AcceleratedBufferSetPool.BufferSet	bufferSet;
+	@Getter private	final SegmentBuffer							vertexBufferOut;
+	private			final MutableLong							vertexBufferOutSize;
+	private			final MutableLong							vertexBufferOutUsedSize;
 
-    public VertexBufferPool(int size, AcceleratedBufferSetPool.BufferSet bufferSet) {
-        super(size, null);
+	public VertexBufferPool(int size, AcceleratedBufferSetPool.BufferSet bufferSet) {
+		super(size, null);
 
-        this.bufferSet = bufferSet;
-        this.vertexBufferOut = new SegmentBuffer(64L * size, size);
-        this.vertexBufferSize = new MutableLong(0L);
-    }
+		this.bufferSet					= bufferSet;
+		this.vertexBufferOut			= new SegmentBuffer	(64L * size, size);
+		this.vertexBufferOutSize		= new MutableLong	(64L * size);
+		this.vertexBufferOutUsedSize	= new MutableLong	(0L);
+	}
 
-    public void prepare() {
-        vertexBufferOut.resizeTo(vertexBufferSize.getValue());
-        vertexBufferOut.clearSegment();
-    }
+	public void prepare() {
+		vertexBufferOut.resizeTo	(vertexBufferOutSize.getValue());
+		vertexBufferOut.clearSegment();
+	}
 
-    public void bind(int target) {
-        vertexBufferOut.bind(target);
-    }
+	@Override
+	public void delete() {
+		vertexBufferOut	.delete();
+		super			.delete();
+	}
 
-    public void bindBase(int target, int index) {
-        vertexBufferOut.bindBase(target, index);
-    }
+	@Override
+	public void reset() {
+		vertexBufferOutUsedSize	.setValue(0L);
+		super					.reset();
+	}
 
-    public void resetResized() {
-        vertexBufferOut.resetResized();
-    }
+	@Override
+	protected VertexBuffer create(Void context, int i) {
+		return new VertexBuffer();
+	}
 
-    public boolean isResized() {
-        return vertexBufferOut.isResized();
-    }
+	@Override
+	protected void reset(VertexBuffer vertexBuffer) {
+		vertexBuffer.poolReset();
+	}
 
-    @Override
-    public void delete() {
-        vertexBufferOut.delete();
-        super.delete();
-    }
+	@Override
+	protected void delete(VertexBuffer vertexBuffer) {
+		vertexBuffer.poolDelete();
+	}
 
-    @Override
-    protected VertexBuffer create(Void context, int i) {
-        return new VertexBuffer();
-    }
+	@Override
+	public boolean test(VertexBuffer vertexBuffer) {
+		return vertexBufferOutUsedSize.addAndGet(vertexBuffer.getSize()) <= (2L * 1024L * 1024L * 1024L);
+	}
 
-    @Override
-    protected void reset(VertexBuffer vertexBuffer) {
-        vertexBuffer.poolReset();
-    }
+	public class VertexBuffer extends MappedBuffer {
 
-    @Override
-    protected void delete(VertexBuffer vertexBuffer) {
-        vertexBuffer.poolDelete();
-    }
+		private long offset;
 
-    public class VertexBuffer extends MappedBuffer {
+		public VertexBuffer() {
+			super(64L);
+			this.offset = -1;
+		}
 
-        private long offset;
+		@Override
+		public void onExpand(long bytes) {
+			vertexBufferOutSize		.add(bytes);
+			vertexBufferOutUsedSize	.add(bytes);
+		}
 
-        public VertexBuffer() {
-            super(64L);
-            this.offset = -1;
-        }
+		@Override
+		public void delete() {
+			throw new IllegalStateException("Pooled buffers cannot be deleted directly.");
+		}
 
-        @Override
-        public void onExpand(long bytes) {
-            vertexBufferSize.add(bytes);
-        }
+		@Override
+		public void reset() {
+			throw new IllegalStateException("Pooled buffers cannot be reset directly.");
+		}
 
-        @Override
-        public void delete() {
-            throw new IllegalStateException("Pooled buffers cannot be deleted directly.");
-        }
+		private void poolDelete() {
+			super.delete();
+		}
 
-        @Override
-        public void reset() {
-            throw new IllegalStateException("Pooled buffers cannot be reset directly.");
-        }
+		private void poolReset() {
+			super.reset();
+			offset = -1;
+		}
 
-        private void poolDelete() {
-            super.delete();
-        }
+		@Override
+		public int getOffset() {
+			if (offset == -1) {
+				offset = vertexBufferOut.getSegmentOffset(position / bufferSet.getVertexSize());
+			}
 
-        private void poolReset() {
-            super.reset();
-            this.offset = -1;
-        }
-
-        @Override
-        public int getOffset() {
-            if (offset == -1) {
-                offset = vertexBufferOut.getSegmentOffset(position / bufferSet.getVertexSize());
-            }
-
-            return (int) offset;
-        }
-    }
+			return (int) offset;
+		}
+	}
 }

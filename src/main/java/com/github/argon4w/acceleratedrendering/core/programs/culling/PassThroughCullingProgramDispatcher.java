@@ -11,36 +11,35 @@ import net.minecraft.resources.ResourceLocation;
 
 public class PassThroughCullingProgramDispatcher implements IPolygonProgramDispatcher {
 
-    public static final PassThroughCullingProgramDispatcher QUAD = new PassThroughCullingProgramDispatcher(VertexFormat.Mode.QUADS, ComputeShaderPrograms.CORE_PASS_THROUGH_QUAD_CULLING_KEY);
-    public static final PassThroughCullingProgramDispatcher TRIANGLE = new PassThroughCullingProgramDispatcher(VertexFormat.Mode.TRIANGLES, ComputeShaderPrograms.CORE_PASS_THROUGH_TRIANGLE_CULLING_KEY);
+	public static final		PassThroughCullingProgramDispatcher	QUAD		= new PassThroughCullingProgramDispatcher(VertexFormat.Mode.QUADS,		ComputeShaderPrograms.CORE_PASS_THROUGH_QUAD_CULLING_KEY);
+	public static final		PassThroughCullingProgramDispatcher	TRIANGLE	= new PassThroughCullingProgramDispatcher(VertexFormat.Mode.TRIANGLES,	ComputeShaderPrograms.CORE_PASS_THROUGH_TRIANGLE_CULLING_KEY);
+	private static final	int									GROUP_SIZE	= 128;
 
-    private static final int GROUP_SIZE = 128;
+	private final VertexFormat.Mode	mode;
+	private final ComputeProgram	program;
+	private final Uniform			polygonCountUniform;
+	private final Uniform			vertexOffsetUniform;
 
-    private final VertexFormat.Mode mode;
-    private final ComputeProgram program;
-    private final Uniform polygonCountUniform;
-    private final Uniform vertexOffsetUniform;
+	public PassThroughCullingProgramDispatcher(VertexFormat.Mode mode, ResourceLocation key) {
+		this.mode					= mode;
+		this.program				= ComputeShaderProgramLoader.getProgram(key);
+		this.polygonCountUniform	= program					.getUniform("polygonCount");
+		this.vertexOffsetUniform	= program					.getUniform("vertexOffset");
+	}
 
-    public PassThroughCullingProgramDispatcher(VertexFormat.Mode mode, ResourceLocation key) {
-        this.mode = mode;
-        this.program = ComputeShaderProgramLoader.getProgram(key);
-        this.polygonCountUniform = program.getUniform("polygonCount");
-        this.vertexOffsetUniform = program.getUniform("vertexOffset");
-    }
+	@Override
+	public int dispatch(AcceleratedBufferBuilder builder) {
+		var vertexCount		= builder.getVertexCount	();
+		var vertexOffset	= builder.getVertexOffset	();
+		var polygonCount	= vertexCount / mode.primitiveLength;
 
-    @Override
-    public int dispatch(AcceleratedBufferBuilder builder) {
-        int vertexCount = builder.getVertexCount();
-        int vertexOffset = builder.getVertexOffset();
-        int polygonCount = vertexCount / mode.primitiveLength;
+		polygonCountUniform.uploadUnsignedInt(polygonCount);
+		vertexOffsetUniform.uploadUnsignedInt(vertexOffset);
 
-        polygonCountUniform.uploadUnsignedInt(polygonCount);
-        vertexOffsetUniform.uploadUnsignedInt(vertexOffset);
+		program.useProgram	();
+		program.dispatch	((polygonCount + GROUP_SIZE - 1) / GROUP_SIZE);
+		program.resetProgram();
 
-        program.useProgram();
-        program.dispatch((polygonCount + GROUP_SIZE - 1) / GROUP_SIZE);
-        program.resetProgram();
-
-        return program.getBarrierFlags();
-    }
+		return program.getBarrierFlags();
+	}
 }

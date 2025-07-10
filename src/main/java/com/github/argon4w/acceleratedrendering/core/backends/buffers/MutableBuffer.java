@@ -4,88 +4,89 @@ import com.github.argon4w.acceleratedrendering.core.utils.MutableSize;
 
 public class MutableBuffer extends MutableSize implements IServerBuffer {
 
-    private final int bits;
+	private final	int				bits;
 
-    protected ImmutableBuffer glBuffer;
+	protected		ImmutableBuffer glBuffer;
 
-    public MutableBuffer(long initialSize, int bits) {
-        super(initialSize);
-        this.bits = bits;
-        this.glBuffer = new ImmutableBuffer(this.size, bits);
-        this.glBuffer.clearBytes(0L, this.size);
-    }
+	public MutableBuffer(long initialSize, int bits) {
+		super(initialSize);
 
-    @Override
-    public void doExpand(long size, long bytes) {
-        long newSize = size + bytes;
+		this.bits		= bits;
+		this.glBuffer	= new ImmutableBuffer	(this.size,	bits);
+		this.glBuffer.clearBytes				(0L,		this.size);
+	}
 
-        ImmutableBuffer newBuffer = new ImmutableBuffer(newSize, bits);
-        newBuffer.clearBytes(0L, newSize);
+	@Override
+	public void doExpand(long size, long bytes) {
+		var newSize		= size + bytes;
+		var newBuffer	= new ImmutableBuffer(newSize, bits);
 
-        glBuffer.copyTo(newBuffer, size);
-        glBuffer.delete();
-        glBuffer = newBuffer;
-    }
+		newBuffer.clearBytes(0L, newSize);
 
-    public long map(int flags) {
-        return glBuffer.map(size, flags);
-    }
+		glBuffer.copyTo(newBuffer, size);
+		glBuffer.delete();
+		glBuffer = newBuffer;
+	}
 
-    public void unmap() {
-        glBuffer.unmap();
-    }
+	public long map(int flags) {
+		return glBuffer.map(size, flags);
+	}
 
-    public void delete() {
-        glBuffer.delete();
-    }
+	public void unmap() {
+		glBuffer.unmap();
+	}
 
-    @Override
-    public int getOffset() {
-        return 0;
-    }
+	public void delete() {
+		glBuffer.delete();
+	}
 
-    @Override
-    public int getBufferHandle() {
-        return glBuffer.getBufferHandle();
-    }
+	@Override
+	public int getOffset() {
+		return 0;
+	}
 
-    @Override
-    public void bind(int target) {
-        glBuffer.bind(target);
-    }
+	@Override
+	public int getBufferHandle() {
+		return glBuffer.getBufferHandle();
+	}
 
-    @Override
-    public void clearInteger(long offset, int value) {
-        glBuffer.clearInteger(offset, value);
-    }
+	@Override
+	public void bind(int target) {
+		glBuffer.bind(target);
+	}
 
-    @Override
-    public void clearBytes(long offset, long size) {
-        glBuffer.clearBytes(offset, size);
-    }
+	@Override
+	public void clearInteger(long offset, int value) {
+		glBuffer.clearInteger(offset, value);
+	}
 
-    @Override
-    public void subData(long offset, int[] data) {
-        glBuffer.subData(offset, data);
-    }
+	@Override
+	public void clearBytes(long offset, long size) {
+		glBuffer.clearBytes(offset, size);
+	}
 
-    @Override
-    public void bindBase(int target, int index) {
-        glBuffer.bindBase(target, index);
-    }
+	@Override
+	public void subData(long offset, int[] data) {
+		glBuffer.subData(offset, data);
+	}
 
-    @Override
-    public void bindRange(
-            int target,
-            int index,
-            long offset,
-            long size
-    ) {
-        glBuffer.bindRange(
-                target,
-                index,
-                offset,
-                size
-        );
-    }
+	@Override
+	public void bindBase(int target, int index) {
+		glBuffer.bindBase(target, index);
+	}
+
+	@Override
+	public void bindRange(
+			int		target,
+			int		index,
+			long	offset,
+			long	size
+	) {
+		glBuffer.bindRange(
+				target,
+				index,
+				offset,
+				size
+		);
+	}
 }

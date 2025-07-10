@@ -1,19 +1,19 @@
 package com.github.argon4w.acceleratedrendering.features.modelparts.mixins;
 
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IAcceleratedVertexConsumer;
+import com.github.argon4w.acceleratedrendering.core.CoreFeature;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IBufferGraph;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.VertexConsumerExtension;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
-import com.github.argon4w.acceleratedrendering.core.buffers.graphs.IBufferGraph;
 import com.github.argon4w.acceleratedrendering.core.meshes.IMesh;
-import com.github.argon4w.acceleratedrendering.core.meshes.collectors.MeshCollectorCuller;
+import com.github.argon4w.acceleratedrendering.core.meshes.collectors.CulledMeshCollector;
 import com.github.argon4w.acceleratedrendering.features.entities.AcceleratedEntityRenderingFeature;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import lombok.experimental.ExtensionMethod;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.RenderType;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,123 +25,117 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 import java.util.Map;
 
-@Mixin(ModelPart.class)
+@ExtensionMethod(VertexConsumerExtension.class)
+@Mixin			(ModelPart				.class)
 public class ModelPartMixin implements IAcceleratedRenderer<Void> {
 
-    @Shadow @Final private List<ModelPart.Cube> cubes;
+	@Shadow @Final private	List<ModelPart.Cube>		cubes;
 
-    @Unique private final Map<IBufferGraph, IMesh> meshes = new Object2ObjectOpenHashMap<>();
+	@Unique private final	Map<IBufferGraph, IMesh>	meshes = new Object2ObjectOpenHashMap<>();
 
-    @Inject(method = "compile", at = @At("HEAD"), cancellable = true)
-    public void compileFast(
-            PoseStack.Pose pPose,
-            VertexConsumer pBuffer,
-            int pPackedLight,
-            int pPackedOverlay,
-            int pColor,
-            CallbackInfo ci
-    ) {
-        IAcceleratedVertexConsumer extension = (IAcceleratedVertexConsumer) pBuffer;
+	@Inject(
+			method		= "compile",
+			at			= @At("HEAD"),
+			cancellable	= true
+	)
+	public void compileFast(
+			PoseStack.Pose	pPose,
+			VertexConsumer	pBuffer,
+			int				pPackedLight,
+			int				pPackedOverlay,
+			int				pColor,
+			CallbackInfo	ci
+	) {
+		var extension = pBuffer.getAccelerated();
 
-        if (!AcceleratedEntityRenderingFeature.isEnabled()) {
-            return;
-        }
+		if (		CoreFeature							.isRenderingLevel				()
+				&&	AcceleratedEntityRenderingFeature	.isEnabled						()
+				&&	AcceleratedEntityRenderingFeature	.shouldUseAcceleratedPipeline	()
+				&&	extension							.isAccelerated					()
+		) {
+			ci			.cancel		();
+			extension	.doRender	(
+					this,
+					null,
+					pPose.pose	(),
+					pPose.normal(),
+					pPackedLight,
+					pPackedOverlay,
+					pColor
+			);
+		}
+	}
 
-        if (!AcceleratedEntityRenderingFeature.shouldUseAcceleratedPipeline()) {
-            return;
-        }
+	@Unique
+	@Override
+	public void render(
+			VertexConsumer	vertexConsumer,
+			Void			context,
+			Matrix4f		transform,
+			Matrix3f		normal,
+			int				light,
+			int				overlay,
+			int				color
+	) {
+		var extension	= vertexConsumer.getAccelerated	();
+		var mesh		= meshes		.get			(extension);
 
-        if (!extension.isAccelerated()) {
-            return;
-        }
+		extension.beginTransform(transform, normal);
 
-        ci.cancel();
+		if (mesh != null) {
+			mesh.write(
+					extension,
+					color,
+					light,
+					overlay
+			);
 
-        extension.doRender(
-                this,
-                null,
-                pPose.pose(),
-                pPose.normal(),
-                pPackedLight,
-                pPackedOverlay,
-                pColor
-        );
-    }
+			extension.endTransform();
+			return;
+		}
 
-    @Unique
-    @Override
-    public void render(
-            VertexConsumer vertexConsumer,
-            Void context,
-            Matrix4f transform,
-            Matrix3f normal,
-            int light,
-            int overlay,
-            int color
-    ) {
-        IAcceleratedVertexConsumer extension = ((IAcceleratedVertexConsumer) vertexConsumer);
+		var culledMeshCollector	= new CulledMeshCollector	(extension.getRenderType(), extension.getBufferSet().getLayout());
+		var meshBuilder			= extension.decorate		(culledMeshCollector);
 
-        IBufferGraph bufferGraph = extension.getBufferGraph();
-        RenderType renderType = extension.getRenderType();
+		for (var cube : cubes) {
+			for (var polygon : cube.polygons) {
+				var polygonNormal = polygon.normal;
 
-        IMesh mesh = meshes.get(bufferGraph);
+				for (var vertex : polygon.vertices) {
+					var vertexPosition = vertex.pos;
 
-        extension.beginTransform(transform, normal);
+					meshBuilder.addVertex(
+							vertexPosition.x / 16.0f,
+							vertexPosition.y / 16.0f,
+							vertexPosition.z / 16.0f,
+							-1,
+							vertex.u,
+							vertex.v,
+							overlay,
+							0,
+							polygonNormal.x,
+							polygonNormal.y,
+							polygonNormal.z
+					);
+				}
+			}
+		}
 
-        if (mesh != null) {
-            mesh.write(
-                    extension,
-                    color,
-                    light,
-                    overlay
-            );
+		culledMeshCollector.flush();
 
-            extension.endTransform();
-            return;
-        }
+		mesh = AcceleratedEntityRenderingFeature
+				.getMeshType()
+				.getBuilder	()
+				.build		(culledMeshCollector);
 
-        MeshCollectorCuller meshCollectorCuller = new MeshCollectorCuller(renderType);
-        VertexConsumer meshBuilder = extension.decorate(meshCollectorCuller);
+		meshes	.put	(extension, mesh);
+		mesh	.write	(
+				extension,
+				color,
+				light,
+				overlay
+		);
 
-        for (ModelPart.Cube cube : cubes) {
-            for (ModelPart.Polygon polygon : cube.polygons) {
-                Vector3f polygonNormal = polygon.normal;
-
-                for (ModelPart.Vertex vertex : polygon.vertices) {
-                    Vector3f vertexPosition = vertex.pos;
-
-                    meshBuilder.addVertex(
-                            vertexPosition.x / 16.0f,
-                            vertexPosition.y / 16.0f,
-                            vertexPosition.z / 16.0f,
-                            -1,
-                            vertex.u,
-                            vertex.v,
-                            overlay,
-                            0,
-                            polygonNormal.x,
-                            polygonNormal.y,
-                            polygonNormal.z
-                    );
-                }
-            }
-        }
-
-        meshCollectorCuller.flush();
-
-        mesh = AcceleratedEntityRenderingFeature
-                .getMeshType()
-                .getBuilder()
-                .build(meshCollectorCuller.getMeshCollector());
-
-        meshes.put(bufferGraph, mesh);
-        mesh.write(
-                extension,
-                color,
-                light,
-                overlay
-        );
-
-        extension.endTransform();
-    }
+		extension.endTransform();
+	}
 }

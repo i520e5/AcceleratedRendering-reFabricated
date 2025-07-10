@@ -8,109 +8,111 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.CrashReport;
 import net.minecraft.ReportedException;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimplePreparableReloadListener;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.neoforged.fml.ModLoader;
 
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.Optional;
 
 public class ComputeShaderProgramLoader extends SimplePreparableReloadListener<Map<ResourceLocation, ComputeShaderProgramLoader.ShaderSource>> {
 
-    private static final Map<ResourceLocation, ComputeProgram> COMPUTE_SHADERS = new Object2ObjectOpenHashMap<>();
-    static final ComputeShaderProgramLoader INSTANCE = new ComputeShaderProgramLoader();
+	public	static final	ComputeShaderProgramLoader				INSTANCE		= new ComputeShaderProgramLoader();
+	private	static final	Map<ResourceLocation, ComputeProgram>	COMPUTE_SHADERS	= new Object2ObjectOpenHashMap<>();
+	private	static			boolean									LOADED			= false;
 
-    @Override
-    protected Map<ResourceLocation, ComputeShaderProgramLoader.ShaderSource> prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
-        try {
-            ImmutableMap.Builder<ResourceLocation, ShaderDefinition> builder = ImmutableMap.builder();
-            ModLoader.postEvent(new LoadComputeShaderEvent(builder));
+	@Override
+	protected Map<ResourceLocation, ComputeShaderProgramLoader.ShaderSource> prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
+		try {
+			var builder			= ModLoader.postEventWithReturn(new LoadComputeShaderEvent(ImmutableMap.builder())).getShaderLocations	();
+			var shaderSources	= new Object2ObjectOpenHashMap<ResourceLocation, ShaderSource>											();
+			var shaderLocations	= builder.build																							();
 
-            Map<ResourceLocation, ShaderSource> shaderSources = new Object2ObjectOpenHashMap<>();
-            Map<ResourceLocation, ShaderDefinition> shaderLocations = builder.build();
+			for (ResourceLocation key : shaderLocations.keySet()) {
+				var definition			= shaderLocations	.get(key);
+				var resourceLocation	= definition		.location;
+				var barrierFlags		= definition		.barrierFlags;
 
-            for (ResourceLocation key : shaderLocations.keySet()) {
-                ShaderDefinition definition = shaderLocations.get(key);
-                ResourceLocation resourceLocation = definition.location;
-                int barrierFlags = definition.barrierFlags;
+				if (resourceLocation == null) {
+					throw new IllegalStateException("Found empty shader location on: \"" + key + "\"");
+				}
 
-                if (resourceLocation == null) {
-                    throw new IllegalStateException("Found empty shader location on: \"" + key + "\"");
-                }
+				var resource = resourceManager.getResource(resourceLocation);
 
-                Optional<Resource> resource = resourceManager.getResource(resourceLocation);
+				if (resource.isEmpty()) {
+					throw new IllegalStateException("Cannot found compute shader: \"" + resourceLocation + "\"");
+				}
 
-                if (resource.isEmpty()) {
-                    throw new IllegalStateException("Cannot found compute shader: \"" + resourceLocation + "\"");
-                }
+				try (var stream = resource.get().open()) {
+					shaderSources.put(key, new ShaderSource(new String(stream.readAllBytes(), StandardCharsets.UTF_8), barrierFlags));
+				}
+			}
 
-                try (InputStream stream = resource.get().open()) {
-                    shaderSources.put(key, new ShaderSource(new String(stream.readAllBytes(), StandardCharsets.UTF_8), barrierFlags));
-                }
-            }
+			return shaderSources;
+		} catch (Exception e) {
+			throw new ReportedException(CrashReport.forThrowable(e, "Exception while loading compute shader"));
+		}
+	}
 
-            return shaderSources;
-        } catch (Exception e) {
-            throw new ReportedException(CrashReport.forThrowable(e, "Exception while loading compute shader"));
-        }
-    }
+	@Override
+	protected void apply(
+			Map<ResourceLocation, ShaderSource>	shaderSources,
+			ResourceManager						resourceManager,
+			ProfilerFiller						profiler
+	) {
+		RenderSystem.recordRenderCall(() -> {
+			try {
+				for (var key : shaderSources.keySet()) {
+					var source			= shaderSources.get(key);
+					var shaderSource	= source.source;
+					var barrierFlags	= source.barrierFlags;
 
-    @Override
-    protected void apply(
-            Map<ResourceLocation, ShaderSource> shaderSources,
-            ResourceManager resourceManager,
-            ProfilerFiller profiler
-    ) {
-        RenderSystem.recordRenderCall(() -> {
-            for (ResourceLocation key : shaderSources.keySet()) {
-                try {
-                    ShaderSource source = shaderSources.get(key);
-                    String shaderSource = source.source;
-                    int barrierFlags = source.barrierFlags;
+					var program			= new ComputeProgram(barrierFlags);
+					var computeShader	= new ComputeShader();
 
-                    ComputeProgram program = new ComputeProgram(barrierFlags);
-                    ComputeShader computeShader = new ComputeShader();
+					computeShader.setShaderSource(shaderSource);
 
-                    computeShader.setShaderSource(shaderSource);
+					if (!computeShader.compileShader()) {
+						throw new IllegalStateException("Shader \"" + key + "\" failed to compile because of the following errors: " + computeShader.getInfoLog());
+					}
 
-                    if (!computeShader.compileShader()) {
-                        throw new IllegalStateException("Shader \"" + key + "\" failed to compile because of the following errors: " + computeShader.getInfoLog());
-                    }
+					program.attachShader(computeShader);
 
-                    program.attachShader(computeShader);
+					if (!program.linkProgram()) {
+						throw new IllegalStateException("Program \"" + key + "\" failed to link because of the following errors: " + program.getInfoLog());
+					}
 
-                    if (!program.linkProgram()) {
-                        throw new IllegalStateException("Program \"" + key + "\" failed to link because of the following errors: " + program.getInfoLog());
-                    }
+					computeShader	.delete();
+					COMPUTE_SHADERS	.put(key, program);
+				}
+			} catch (Exception e) {
+				throw new ReportedException(CrashReport.forThrowable(e, "Exception while compiling/linking compute shader"));
+			} finally {
+				LOADED = true;
+			}
+		});
+	}
 
-                    computeShader.delete();
-                    COMPUTE_SHADERS.put(key, program);
-                } catch (Exception e) {
-                    throw new ReportedException(CrashReport.forThrowable(e, "Exception while compiling/linking compute shader"));
-                }
-            }
-        });
-    }
+	public static ComputeProgram getProgram(ResourceLocation resourceLocation) {
+		var program = COMPUTE_SHADERS.get(resourceLocation);
 
-    public static ComputeProgram getProgram(ResourceLocation resourceLocation) {
-        ComputeProgram program = COMPUTE_SHADERS.get(resourceLocation);
+		if (program == null) {
+			throw new IllegalStateException("Get shader program \""+ resourceLocation + "\" too early! Program is not loaded yet!");
+		}
 
-        if (program == null) {
-            throw new IllegalStateException("Get shader program \""+ resourceLocation + "\" too early! Program is not loaded yet!");
-        }
+		return program;
+	}
 
-        return program;
-    }
+	public static boolean isProgramsLoaded() {
+		return LOADED;
+	}
 
-    public record ShaderDefinition(ResourceLocation location, int barrierFlags) {
+	public record ShaderDefinition(ResourceLocation location, int barrierFlags) {
 
-    }
+	}
 
-    public record ShaderSource(String source, int barrierFlags) {
+	public record ShaderSource(String source, int barrierFlags) {
 
-    }
+	}
 }

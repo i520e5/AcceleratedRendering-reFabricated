@@ -1,37 +1,34 @@
 package com.github.argon4w.acceleratedrendering.compat.iris.programs.processing;
 
+import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryInterface;
+import com.github.argon4w.acceleratedrendering.core.buffers.memory.VertexFormatMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.programs.extras.IExtraVertexData;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import net.irisshaders.iris.vertices.IrisVertexFormats;
-import org.lwjgl.system.MemoryUtil;
 
 public class IrisExtraVertexData implements IExtraVertexData {
 
-    private final int entityOffset;
-    private final int entityIdOffset;
+	private final IMemoryInterface entityOffset;
+	private final IMemoryInterface entityIdOffset;
 
-    public IrisExtraVertexData(VertexFormat vertexFormat) {
-        this.entityOffset = vertexFormat.getOffset(IrisVertexFormats.ENTITY_ELEMENT);
-        this.entityIdOffset = vertexFormat.getOffset(IrisVertexFormats.ENTITY_ID_ELEMENT);
-    }
+	public IrisExtraVertexData(VertexFormat vertexFormat) {
+		var layout			= new VertexFormatMemoryLayout	(vertexFormat);
+		this.entityOffset	= layout.getElement				(IrisVertexFormats.ENTITY_ELEMENT);
+		this.entityIdOffset	= layout.getElement				(IrisVertexFormats.ENTITY_ID_ELEMENT);
+	}
 
-    @Override
-    public void addExtraVertex(long address) {
-        if (entityOffset != -1) {
-            MemoryUtil.memPutShort(address + entityOffset + 0L, (short) -1);
-            MemoryUtil.memPutShort(address + entityOffset + 2L, (short) -1);
-        }
+	@Override
+	public void addExtraVertex(long address) {
+		entityOffset	.putShort(address + 0L, (short) -1);
+		entityOffset	.putShort(address + 2L, (short) -1);
+		entityIdOffset	.putShort(address + 0L, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedEntity());
+		entityIdOffset	.putShort(address + 2L, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedBlockEntity());
+		entityIdOffset	.putShort(address + 4L, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedItem());
+	}
 
-        if (entityIdOffset != -1) {
-            MemoryUtil.memPutShort(address + entityIdOffset + 0L, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedEntity());
-            MemoryUtil.memPutShort(address + entityIdOffset + 2L, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedBlockEntity());
-            MemoryUtil.memPutShort(address + entityIdOffset + 4L, (short) CapturedRenderingState.INSTANCE.getCurrentRenderedItem());
-        }
-    }
+	@Override
+	public void addExtraVarying(long address) {
 
-    @Override
-    public void addExtraVarying(long address) {
-
-    }
+	}
 }

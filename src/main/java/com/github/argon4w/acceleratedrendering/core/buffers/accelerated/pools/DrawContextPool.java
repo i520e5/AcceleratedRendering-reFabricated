@@ -9,73 +9,73 @@ import static org.lwjgl.opengl.GL46.*;
 
 public class DrawContextPool extends SimpleResetPool<DrawContextPool.IndirectDrawContext, SegmentBuffer> {
 
-    public DrawContextPool(int size) {
-        super(size, new SegmentBuffer(20L * size, size));
-    }
+	public DrawContextPool(int size) {
+		super(size, new SegmentBuffer(20L * size, size));
+	}
 
-    public void bindCommandBuffer() {
-        getContext().bind(GL_DRAW_INDIRECT_BUFFER);
-    }
+	public void bindCommandBuffer() {
+		getContext().bind(GL_DRAW_INDIRECT_BUFFER);
+	}
 
-    @Override
-    protected IndirectDrawContext create(SegmentBuffer buffer, int i) {
-        return new IndirectDrawContext(buffer.getSegment(20L));
-    }
+	@Override
+	protected IndirectDrawContext create(SegmentBuffer buffer, int i) {
+		return new IndirectDrawContext(buffer.getSegment(20L));
+	}
 
-    @Override
-    protected void reset(IndirectDrawContext drawContext) {
+	@Override
+	protected void reset(IndirectDrawContext drawContext) {
 
-    }
+	}
 
-    @Override
-    protected void delete(IndirectDrawContext drawContext) {
+	@Override
+	protected void delete(IndirectDrawContext drawContext) {
 
-    }
+	}
 
-    @Override
-    public void delete() {
-        super.getContext().delete();
-    }
+	@Override
+	public void delete() {
+		super.getContext().delete();
+	}
 
-    public static void waitBarriers() {
-        glMemoryBarrier(GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
-    }
+	public static void waitBarriers() {
+		glMemoryBarrier(GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
+	}
 
-    public static class IndirectDrawContext {
+	public static class IndirectDrawContext {
 
-        private final long commandOffset;
-        private final IServerBuffer commandBuffer;
+		private final	long			commandOffset;
+		private final	IServerBuffer	commandBuffer;
 
-        private int cachedOffset;
+		private			int				cachedOffset;
 
-        public IndirectDrawContext(IServerBuffer commandBuffer) {
-            this.commandOffset = commandBuffer.getOffset();
-            this.commandBuffer = commandBuffer;
-            this.commandBuffer.subData(0, new int[] {0, 1, 0, 0, 0});
+		public IndirectDrawContext(IServerBuffer commandBuffer) {
+			this.commandOffset	= commandBuffer.getOffset();
+			this.commandBuffer	= commandBuffer;
+			this.commandBuffer.subData(0, new int[] {0, 1, 0, 0, 0});
 
-            this.cachedOffset = -1;
-        }
+			this.cachedOffset	= -1;
+		}
 
-        public void bindComputeBuffers(ElementBufferPool.ElementSegment elementSegmentIn) {
-            IServerBuffer elementBufferOut = elementSegmentIn.getBuffer();
-            int elementOffset = elementBufferOut.getOffset();
+		public void bindComputeBuffers(ElementBufferPool.ElementSegment elementSegmentIn) {
+			var elementBufferOut	= elementSegmentIn.getBuffer();
+			var elementOffset		= elementBufferOut.getOffset();
 
-            if (cachedOffset != elementOffset) {
-                cachedOffset = elementOffset;
-                commandBuffer.clearInteger(8, elementOffset / 4);
-            }
+			if (cachedOffset != elementOffset) {
+				cachedOffset = elementOffset;
+				commandBuffer.clearInteger(8, elementOffset / 4);
+			}
 
-            commandBuffer.clearInteger(0, 0);
-            commandBuffer.bindBase(GL_ATOMIC_COUNTER_BUFFER, 0);
-            elementBufferOut.bindBase(GL_SHADER_STORAGE_BUFFER, 6);
-        }
+			commandBuffer	.clearInteger	(0,							0);
+			commandBuffer	.bindBase		(GL_ATOMIC_COUNTER_BUFFER,	0);
+			elementBufferOut.bindBase		(GL_SHADER_STORAGE_BUFFER,	6);
+		}
 
-        public void drawElements(VertexFormat.Mode mode) {
-            glDrawElementsIndirect(
-                    mode.asGLMode,
-                    GL_UNSIGNED_INT,
-                    commandOffset
-            );
-        }
-    }
+		public void drawElements(VertexFormat.Mode mode) {
+			glDrawElementsIndirect(
+					mode.asGLMode,
+					GL_UNSIGNED_INT,
+					commandOffset
+			);
+		}
+	}
 }

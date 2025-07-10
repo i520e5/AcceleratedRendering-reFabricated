@@ -3,7 +3,7 @@ plugins {
     id 'eclipse'
     id 'idea'
     id 'maven-publish'
-    id 'net.neoforged.gradle.userdev' version '7.0.165'
+    id 'net.neoforged.gradle.userdev' version '7.0.189'
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -32,8 +32,11 @@ repositories {
         }
     }
 
-    flatDir {
-        dir 'libs'
+    maven {
+        url 'https://jitpack.io'
+        content {
+            includeGroup "com.github.TartaricAcid"
+        }
     }
 }
 
@@ -136,7 +139,11 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html54
     implementation "maven.modrinth:sodium:mc1.21.1-0.6.9-neoforge"
     implementation "maven.modrinth:iris:1.8.8+1.21.1-neoforge"
-    implementation "com.github.tartaricacid:touhoulittlemaid-1.21.1:release-1.2.2"
+    implementation "maven.modrinth:touhou-little-maid:3XPwCAVd"
+    implementation 'com.github.TartaricAcid:SimpleBedrockModel:neoforge-1.21.1-1.2.1-release'
+
+    compileOnly "org.projectlombok:lombok:1.18.38"
+    annotationProcessor "org.projectlombok:lombok:1.18.38"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

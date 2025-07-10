@@ -1,147 +1,115 @@
 package com.github.argon4w.acceleratedrendering.features.text;
 
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IAcceleratedVertexConsumer;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IBufferGraph;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.VertexConsumerExtension;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
-import com.github.argon4w.acceleratedrendering.core.buffers.graphs.IBufferGraph;
 import com.github.argon4w.acceleratedrendering.core.meshes.IMesh;
-import com.github.argon4w.acceleratedrendering.core.meshes.collectors.MeshCollector;
+import com.github.argon4w.acceleratedrendering.core.meshes.collectors.SimpleMeshCollector;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import lombok.experimental.ExtensionMethod;
 import net.minecraft.client.gui.font.glyphs.BakedGlyph;
-import net.minecraft.client.renderer.RenderType;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 
 import java.util.Map;
 
-public class AcceleratedBakedGlyphRenderer implements IAcceleratedRenderer<Void> {
+@ExtensionMethod(VertexConsumerExtension.class)
+public class AcceleratedBakedGlyphRenderer implements IAcceleratedRenderer<Vector2f> {
 
-    private final Map<IBufferGraph, IMesh> meshes;
-    private final BakedGlyph bakedGlyph;
-    private final boolean italic;
+	private static final Matrix4f TRANSFORM	= new Matrix4f();
+	private static final Matrix3f NORMAL	= new Matrix3f();
 
-    public AcceleratedBakedGlyphRenderer(BakedGlyph bakedGlyph, boolean italic) {
-        this.meshes = new Object2ObjectOpenHashMap<>();
-        this.bakedGlyph = bakedGlyph;
-        this.italic = italic;
-    }
+	private final Map<IBufferGraph, IMesh>	meshes;
+	private final BakedGlyph				bakedGlyph;
+	private final boolean					italic;
 
-    @Override
-    public void render(
-            VertexConsumer vertexConsumer,
-            Void context,
-            Matrix4f transform,
-            Matrix3f normal,
-            int light,
-            int overlay,
-            int color
-    ) {
-        IAcceleratedVertexConsumer extension = (IAcceleratedVertexConsumer) vertexConsumer;
+	public AcceleratedBakedGlyphRenderer(BakedGlyph bakedGlyph, boolean italic) {
+		this.meshes		= new Object2ObjectOpenHashMap<>();
+		this.bakedGlyph	= bakedGlyph;
+		this.italic		= italic;
+	}
 
-        IBufferGraph bufferGraph = extension.getBufferGraph();
-        RenderType renderType = extension.getRenderType();
+	@Override
+	public void render(
+			VertexConsumer	vertexConsumer,
+			Vector2f		context,
+			Matrix4f		transform,
+			Matrix3f		normal,
+			int				light,
+			int				overlay,
+			int				color
+	) {
+		var extension	= vertexConsumer.getAccelerated	();
+		var mesh		= meshes		.get			(extension);
 
-        IMesh mesh = meshes.get(bufferGraph);
+		TRANSFORM.set		(transform);
+		TRANSFORM.translate	(
+				context.x,
+				context.y,
+				0.0f
+		);
 
-        extension.beginTransform(transform, normal);
+		extension.beginTransform(TRANSFORM, NORMAL);
 
-        if (mesh != null) {
-            mesh.write(
-                    extension,
-                    color,
-                    light,
-                    overlay
-            );
+		if (mesh != null) {
+			mesh.write(
+					extension,
+					color,
+					light,
+					overlay
+			);
 
-            extension.endTransform();
-            return;
-        }
+			extension.endTransform();
+			return;
+		}
 
-        MeshCollector meshCollector = new MeshCollector(renderType.format);
+		var meshCollector	= new SimpleMeshCollector	(extension.getBufferSet().getLayout());
+		var meshBuilder		= extension.decorate		(meshCollector);
 
-        addGlyphQuad(
-                extension.decorate(meshCollector),
-                italic,
-                bakedGlyph,
-                new Vector3f()
-        );
+		var italicOffsetUp		= italic ? 1.0f - 0.25f * bakedGlyph.up		: 0.0f;
+		var italicOffsetDown	= italic ? 1.0f - 0.25f * bakedGlyph.down	: 0.0f;
 
-        mesh = AcceleratedTextRenderingFeature
-                .getMeshType()
-                .getBuilder()
-                .build(meshCollector);
+		var positions = new Vector2f[] {
+				new Vector2f(bakedGlyph.left	+ italicOffsetUp,	bakedGlyph.up),
+				new Vector2f(bakedGlyph.left	+ italicOffsetDown,	bakedGlyph.down),
+				new Vector2f(bakedGlyph.right	+ italicOffsetDown,	bakedGlyph.down),
+				new Vector2f(bakedGlyph.right	+ italicOffsetUp,	bakedGlyph.up)
+		};
 
-        meshes.put(bufferGraph, mesh);
-        mesh.write(
-                extension,
-                color,
-                light,
-                overlay
-        );
+		var texCoords = new Vector2f[] {
+				new Vector2f(bakedGlyph.u0, bakedGlyph.v0),
+				new Vector2f(bakedGlyph.u0, bakedGlyph.v1),
+				new Vector2f(bakedGlyph.u1, bakedGlyph.v1),
+				new Vector2f(bakedGlyph.u1, bakedGlyph.v0),
+		};
 
-        extension.endTransform();
-    }
+		for (var i = 0; i < 4; i ++) {
+			var position	= new Vector3f(positions[i], 0.0f);
+			var texCoord	= texCoords[i];
 
-    public static void addGlyphQuad(
-            VertexConsumer vertexConsumer,
-            boolean italic,
-            BakedGlyph glyph,
-            Vector3f offset
-    ) {
-        float italicOffsetUp = italic ? 1.0f - 0.25f * glyph.up : 0.0f;
-        float italicOffsetDown = italic ? 1.0f - 0.25f * glyph.down : 0.0f;
+			meshBuilder
+					.addVertex	(position)
+					.setColor	(-1)
+					.setUv		(texCoord.x, texCoord.y)
+					.setLight	(0);
+		}
 
-        addGlyphVertex(
-                vertexConsumer,
-                offset.x + glyph.left + italicOffsetUp,
-                offset.y + glyph.up,
-                offset.z,
-                glyph.u0,
-                glyph.v0
-        );
-        addGlyphVertex(
-                vertexConsumer,
-                offset.x + glyph.left + italicOffsetDown,
-                offset.y + glyph.down,
-                offset.z,
-                glyph.u0,
-                glyph.v1
-        );
-        addGlyphVertex(
-                vertexConsumer,
-                offset.x + glyph.right + italicOffsetDown,
-                offset.y + glyph.down,
-                offset.z,
-                glyph.u1,
-                glyph.v1
-        );
-        addGlyphVertex(
-                vertexConsumer,
-                offset.x + glyph.right + italicOffsetUp,
-                offset.y + glyph.up,
-                offset.z,
-                glyph.u1,
-                glyph.v0
-        );
-    }
+		mesh = AcceleratedTextRenderingFeature
+				.getMeshType()
+				.getBuilder	()
+				.build		(meshCollector);
 
-    public static void addGlyphVertex(
-            VertexConsumer vertexConsumer,
-            float positionX,
-            float positionY,
-            float positionZ,
-            float u,
-            float v
-    ) {
-        vertexConsumer
-                .addVertex(
-                        positionX,
-                        positionY,
-                        positionZ
-                )
-                .setColor(-1)
-                .setUv(u, v)
-                .setLight(0);
-    }
+		meshes	.put	(extension, mesh);
+		mesh	.write	(
+				extension,
+				color,
+				light,
+				overlay
+		);
+
+		extension.endTransform();
+	}
 }

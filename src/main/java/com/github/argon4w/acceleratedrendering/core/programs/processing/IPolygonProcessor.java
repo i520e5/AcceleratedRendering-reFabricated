@@ -6,6 +6,6 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 
 public interface IPolygonProcessor {
 
-    IPolygonProgramDispatcher select(VertexFormat.Mode mode);
-    IExtraVertexData getExtraVertex(VertexFormat.Mode mode);
+	IPolygonProgramDispatcher   select          (VertexFormat.Mode mode);
+	IExtraVertexData            getExtraVertex  (VertexFormat.Mode mode);
 }

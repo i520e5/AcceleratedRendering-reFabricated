@@ -14,82 +14,45 @@ import net.minecraft.resources.ResourceLocation;
 
 public class IrisCullingProgramSelector implements ICullingProgramSelector {
 
-    public static final FlagsExtraVertexData EMPTY = new FlagsExtraVertexData();
-    public static final FlagsExtraVertexData NO_CULL = new FlagsExtraVertexData(0);
+	public static	final FlagsExtraVertexData		EMPTY	= new FlagsExtraVertexData();
+	public static	final FlagsExtraVertexData		NO_CULL	= new FlagsExtraVertexData(0);
 
-    private final ICullingProgramSelector parent;
-    private final VertexFormat.Mode mode;
-    private final IPolygonProgramDispatcher dispatcher;
+	private			final ICullingProgramSelector	parent;
+	private			final VertexFormat.Mode			mode;
+	private			final IPolygonProgramDispatcher	dispatcher;
 
-    public IrisCullingProgramSelector(
-            ICullingProgramSelector parent,
-            VertexFormat.Mode mode,
-            ResourceLocation key
-    ) {
-        this.parent = parent;
-        this.mode = mode;
-        this.dispatcher = new IrisCullingProgramDispatcher(mode, key);
-    }
+	public IrisCullingProgramSelector(
+			ICullingProgramSelector	parent,
+			VertexFormat.Mode		mode,
+			ResourceLocation		key
+	) {
+		this.parent		= parent;
+		this.mode		= mode;
+		this.dispatcher	= new IrisCullingProgramDispatcher(mode, key);
+	}
 
-    @Override
-    public IPolygonProgramDispatcher select(RenderType renderType) {
-        if (!IrisCompatFeature.isEnabled()) {
-            return parent.select(renderType);
-        }
+	@Override
+	public IPolygonProgramDispatcher select(RenderType renderType) {
+		return 			IrisCompatFeature			.isEnabled					()
+				&&		IrisCompatFeature			.isIrisCompatCullingEnabled	()
+				&&	(	IrisCompatFeature			.isShadowCullingEnabled		()	|| !ShadowRenderingState.areShadowsCurrentlyBeingRendered())
+				&&		OrientationCullingFeature	.isEnabled					()
+				&&	(	OrientationCullingFeature	.shouldIgnoreCullState		()	|| RenderTypeUtils.isCulled(renderType))
+				&&		this.mode					.equals						(renderType.mode)
+				?		dispatcher
+				:		parent.select(renderType);
+	}
 
-        if (!IrisCompatFeature.isIrisCompatCullingEnabled()) {
-            return parent.select(renderType);
-        }
-
-        if (!IrisCompatFeature.isShadowCullingEnabled() && ShadowRenderingState.areShadowsCurrentlyBeingRendered()) {
-            return parent.select(renderType);
-        }
-
-        if (!OrientationCullingFeature.isEnabled()) {
-            return parent.select(renderType);
-        }
-
-        if (this.mode != renderType.mode) {
-            return parent.select(renderType);
-        }
-
-        if (OrientationCullingFeature.shouldIgnoreCullState()) {
-            return dispatcher;
-        }
-
-        if (RenderTypeUtils.isCulled(renderType)) {
-            return dispatcher;
-        }
-
-        return parent.select(renderType);
-    }
-
-    @Override
-    public IExtraVertexData getExtraVertex(VertexFormat.Mode mode) {
-        if (!IrisCompatFeature.isEnabled()) {
-            return parent.getExtraVertex(mode);
-        }
-
-        if (!IrisCompatFeature.isIrisCompatCullingEnabled()) {
-            return parent.getExtraVertex(mode);
-        }
-
-        if (!OrientationCullingFeature.isEnabled()) {
-            return parent.getExtraVertex(mode);
-        }
-
-        if (this.mode != mode) {
-            return parent.getExtraVertex(mode);
-        }
-
-        if (!IrisCompatFeature.isShadowCullingEnabled() && ShadowRenderingState.areShadowsCurrentlyBeingRendered()) {
-            return EMPTY;
-        }
-
-        if (!OrientationCullingFeature.shouldCull()) {
-            return NO_CULL;
-        }
-
-        return EMPTY;
-    }
+	@Override
+	public IExtraVertexData getExtraVertex(VertexFormat.Mode mode) {
+		return 			IrisCompatFeature			.isEnabled					()
+				&&		IrisCompatFeature			.isIrisCompatCullingEnabled	()
+				&&		this.mode					.equals						(mode)
+				&&		OrientationCullingFeature	.isEnabled					()
+				?	(	OrientationCullingFeature	.shouldCull					()
+				&&	(	IrisCompatFeature			.isShadowCullingEnabled		()	|| !ShadowRenderingState.areShadowsCurrentlyBeingRendered())
+				?		EMPTY
+				:		NO_CULL)
+				:		parent.getExtraVertex(mode);
+	}
 }

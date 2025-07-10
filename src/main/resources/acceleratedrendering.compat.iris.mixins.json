@@ -7,15 +7,16 @@
   "client": [
     "acceleratedrendering.AcceleratedBufferSourceMixin",
     "acceleratedrendering.AcceleratedRenderingModEntryMixin",
+    "acceleratedrendering.CoreBuffersMixin",
     "acceleratedrendering.IBufferEnvironmentPresetsMixin",
-    "acceleratedrendering.RedirectingBufferSourceMixin",
+    "acceleratedrendering.AcceleratedBufferSourceSetMixin",
     "acceleratedrendering.RenderTypeUtilsMixin",
+    "iris.FullyBufferedMultiBufferSourceMixin",
+    "iris.HandRendererMixin",
     "iris.IrisVertexFormatsMixin",
     "iris.ModelToEntityVertexSerializerMixin",
     "iris.ShadowRendererMixin",
-    "iris.WrappableRenderTypeMixin",
-    "vanilla.LevelRendererMixin",
-    "vanilla.RenderTypeMixin"
+    "vanilla.LevelRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

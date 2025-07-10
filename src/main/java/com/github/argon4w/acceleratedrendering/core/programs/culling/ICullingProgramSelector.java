@@ -7,6 +7,6 @@ import net.minecraft.client.renderer.RenderType;
 
 public interface ICullingProgramSelector {
 
-    IPolygonProgramDispatcher select(RenderType renderType);
-    IExtraVertexData getExtraVertex(VertexFormat.Mode mode);
+	IPolygonProgramDispatcher	select			(RenderType			renderType);
+	IExtraVertexData			getExtraVertex	(VertexFormat.Mode	mode);
 }
