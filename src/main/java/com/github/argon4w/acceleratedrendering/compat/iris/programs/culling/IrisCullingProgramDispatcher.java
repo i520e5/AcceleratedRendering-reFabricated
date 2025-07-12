@@ -41,7 +41,7 @@ public class IrisCullingProgramDispatcher implements IPolygonProgramDispatcher {
 		viewMatrixUniform	.uploadMatrix4f		(shadowState ? ShadowRenderer.MODELVIEW		: RenderSystem.getModelViewMatrix());
 		projectMatrixUniform.uploadMatrix4f		(shadowState ? ShadowRenderer.PROJECTION	: RenderSystem.getProjectionMatrix());
 		polygonCountUniform	.uploadUnsignedInt	(polygonCount);
-		vertexOffsetUniform	.uploadUnsignedInt	(vertexOffset);
+		vertexOffsetUniform	.uploadUnsignedInt	((int) vertexOffset);
 
 		program.useProgram	();
 		program.dispatch	((polygonCount + GROUP_SIZE - 1) / GROUP_SIZE);

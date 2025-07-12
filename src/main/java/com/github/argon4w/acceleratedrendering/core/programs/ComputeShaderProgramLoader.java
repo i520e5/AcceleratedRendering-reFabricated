@@ -25,9 +25,9 @@ public class ComputeShaderProgramLoader extends SimplePreparableReloadListener<M
 	@Override
 	protected Map<ResourceLocation, ComputeShaderProgramLoader.ShaderSource> prepare(ResourceManager resourceManager, ProfilerFiller profiler) {
 		try {
-			var builder			= ModLoader.postEventWithReturn(new LoadComputeShaderEvent(ImmutableMap.builder())).getShaderLocations	();
+			var builder			= ModLoader.postEventWithReturn(new LoadComputeShaderEvent(ImmutableMap.builder()))	.getShaderLocations	();
 			var shaderSources	= new Object2ObjectOpenHashMap<ResourceLocation, ShaderSource>											();
-			var shaderLocations	= builder.build																							();
+			var shaderLocations	= builder																			.build				();
 
 			for (ResourceLocation key : shaderLocations.keySet()) {
 				var definition			= shaderLocations	.get(key);
@@ -64,12 +64,12 @@ public class ComputeShaderProgramLoader extends SimplePreparableReloadListener<M
 		RenderSystem.recordRenderCall(() -> {
 			try {
 				for (var key : shaderSources.keySet()) {
-					var source			= shaderSources.get(key);
-					var shaderSource	= source.source;
-					var barrierFlags	= source.barrierFlags;
+					var source			= shaderSources	.get(key);
+					var shaderSource	= source		.source;
+					var barrierFlags	= source		.barrierFlags;
 
 					var program			= new ComputeProgram(barrierFlags);
-					var computeShader	= new ComputeShader();
+					var computeShader	= new ComputeShader	();
 
 					computeShader.setShaderSource(shaderSource);
 
@@ -83,8 +83,8 @@ public class ComputeShaderProgramLoader extends SimplePreparableReloadListener<M
 						throw new IllegalStateException("Program \"" + key + "\" failed to link because of the following errors: " + program.getInfoLog());
 					}
 
-					computeShader	.delete();
-					COMPUTE_SHADERS	.put(key, program);
+					computeShader	.delete	();
+					COMPUTE_SHADERS	.put	(key, program);
 				}
 			} catch (Exception e) {
 				throw new ReportedException(CrashReport.forThrowable(e, "Exception while compiling/linking compute shader"));

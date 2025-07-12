@@ -34,7 +34,7 @@ public class PassThroughCullingProgramDispatcher implements IPolygonProgramDispa
 		var polygonCount	= vertexCount / mode.primitiveLength;
 
 		polygonCountUniform.uploadUnsignedInt(polygonCount);
-		vertexOffsetUniform.uploadUnsignedInt(vertexOffset);
+		vertexOffsetUniform.uploadUnsignedInt((int) vertexOffset);
 
 		program.useProgram	();
 		program.dispatch	((polygonCount + GROUP_SIZE - 1) / GROUP_SIZE);

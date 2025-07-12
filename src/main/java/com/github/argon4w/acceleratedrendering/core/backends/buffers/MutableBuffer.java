@@ -2,6 +2,8 @@ package com.github.argon4w.acceleratedrendering.core.backends.buffers;
 
 import com.github.argon4w.acceleratedrendering.core.utils.MutableSize;
 
+import java.nio.ByteBuffer;
+
 public class MutableBuffer extends MutableSize implements IServerBuffer {
 
 	private final	int				bits;
@@ -12,16 +14,13 @@ public class MutableBuffer extends MutableSize implements IServerBuffer {
 		super(initialSize);
 
 		this.bits		= bits;
-		this.glBuffer	= new ImmutableBuffer	(this.size,	bits);
-		this.glBuffer.clearBytes				(0L,		this.size);
+		this.glBuffer	= new ImmutableBuffer(this.size, bits);
 	}
 
 	@Override
 	public void doExpand(long size, long bytes) {
 		var newSize		= size + bytes;
 		var newBuffer	= new ImmutableBuffer(newSize, bits);
-
-		newBuffer.clearBytes(0L, newSize);
 
 		glBuffer.copyTo(newBuffer, size);
 		glBuffer.delete();
@@ -41,11 +40,6 @@ public class MutableBuffer extends MutableSize implements IServerBuffer {
 	}
 
 	@Override
-	public int getOffset() {
-		return 0;
-	}
-
-	@Override
 	public int getBufferHandle() {
 		return glBuffer.getBufferHandle();
 	}
@@ -56,17 +50,7 @@ public class MutableBuffer extends MutableSize implements IServerBuffer {
 	}
 
 	@Override
-	public void clearInteger(long offset, int value) {
-		glBuffer.clearInteger(offset, value);
-	}
-
-	@Override
-	public void clearBytes(long offset, long size) {
-		glBuffer.clearBytes(offset, size);
-	}
-
-	@Override
-	public void subData(long offset, int[] data) {
+	public void subData(long offset, ByteBuffer data) {
 		glBuffer.subData(offset, data);
 	}
 

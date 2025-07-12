@@ -151,7 +151,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		elementCount	++;
 
 		if (elementCount >= polygonSize) {
-			elementSegment.countPolygons(polygonElementCount);
+			elementSegment.countElements(polygonElementCount);
 			elementCount	= 0;
 			activeSharing	= -1;
 		}
@@ -301,7 +301,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		elementCount	++;
 
 		if (elementCount >= polygonSize) {
-			elementSegment.countPolygons(polygonElementCount);
+			elementSegment.countElements(polygonElementCount);
 			elementCount	= 0;
 			activeSharing	= -1;
 		}
@@ -349,27 +349,27 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		var varyingAddress	= varyingBuffer	.reserve		(4L * 4L * size);
 		var data			= bufferSet		.getExtraVertex	(mode);
 
-		data.addExtraVertex	(vertexAddress);
-		data.addExtraVarying(varyingAddress);
+		data			.addExtraVertex	(vertexAddress);
+		data			.addExtraVarying(varyingAddress);
 
-		MemoryUtil.memCopy(
+		MemoryUtil		.memCopy		(
 				MemoryUtil.memAddress0(meshBuffer),
 				vertexAddress,
 				bufferSize
 		);
 
-		colorOffset		.putInt(vertexAddress,	FastColor.ABGR32.fromArgb32(color));
-		uv1Offset		.putInt(vertexAddress,	overlay);
-		uv2Offset		.putInt(vertexAddress,	light);
+		colorOffset		.putInt			(vertexAddress,		FastColor.ABGR32.fromArgb32(color));
+		uv1Offset		.putInt			(vertexAddress,		overlay);
+		uv2Offset		.putInt			(vertexAddress,		light);
 
-		VARYING_SHARING	.putInt(varyingAddress,	activeSharing);
-		VARYING_MESH	.putInt(varyingAddress,	-1);
+		VARYING_SHARING	.putInt			(varyingAddress,	activeSharing);
+		VARYING_MESH	.putInt			(varyingAddress,	-1);
 
 		for (int i = 0; i < size; i++) {
 			VARYING_OFFSET.at(i).putInt(varyingAddress, i);
 		}
 
-		elementSegment.countPolygons(mode.indexCount(size));
+		elementSegment	.countElements	(mode.indexCount(size));
 		vertexCount += size;
 	}
 
@@ -387,21 +387,21 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		var varyingAddress	= varyingBuffer	.reserve		(4L * 4L	* size);
 		var data			= bufferSet		.getExtraVertex	(mode);
 
-		data.addExtraVertex	(vertexAddress);
-		data.addExtraVarying(varyingAddress);
+		data			.addExtraVertex	(vertexAddress);
+		data			.addExtraVarying(varyingAddress);
 
-		colorOffset		.putInt(vertexAddress,	FastColor.ABGR32.fromArgb32(color));
-		uv1Offset		.putInt(vertexAddress,	overlay);
-		uv2Offset		.putInt(vertexAddress,	light);
+		colorOffset		.putInt			(vertexAddress,		FastColor.ABGR32.fromArgb32(color));
+		uv1Offset		.putInt			(vertexAddress,		overlay);
+		uv2Offset		.putInt			(vertexAddress,		light);
 
-		VARYING_SHARING	.putInt(varyingAddress,	activeSharing);
-		VARYING_MESH	.putInt(varyingAddress,	(int) meshOffset);
+		VARYING_SHARING	.putInt			(varyingAddress,	activeSharing);
+		VARYING_MESH	.putInt			(varyingAddress,	(int) meshOffset);
 
 		for (var i = 0; i < size; i++) {
 			VARYING_OFFSET.at(i).putInt(varyingAddress, i);
 		}
 
-		elementSegment.countPolygons(mode.indexCount(size));
+		elementSegment	.countElements	(mode.indexCount(size));
 		vertexCount += size;
 	}
 
@@ -450,7 +450,11 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		return vertexCount == 0;
 	}
 
-	public int getVertexOffset() {
+	public void allocateVertexOffset() {
+		vertexBuffer.allocateOffset();
+	}
+
+	public long getVertexOffset() {
 		return vertexBuffer.getOffset();
 	}
 }

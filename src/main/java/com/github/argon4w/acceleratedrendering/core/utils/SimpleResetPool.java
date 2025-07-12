@@ -2,13 +2,15 @@ package com.github.argon4w.acceleratedrendering.core.utils;
 
 import lombok.Getter;
 
+import java.util.Arrays;
+
 public abstract class SimpleResetPool<T, C> {
 
-	private			final int		size;
-	private			final Object[]	pool;
-	@Getter private	final C			context;
+	@Getter protected final	C			context;
 
-	private int cursor;
+	private					int			cursor;
+	protected 				int			size;
+	protected				Object[]	pool;
 
 	public SimpleResetPool(int size, C context) {
 		this.size		= size;
@@ -41,7 +43,7 @@ public abstract class SimpleResetPool<T, C> {
 
 	@SuppressWarnings("unchecked")
 	public void reset() {
-		for (int i = 0; i < cursor; i++) {
+		for (var i = 0; i < cursor; i++) {
 			reset((T) pool[i]);
 		}
 
@@ -50,8 +52,19 @@ public abstract class SimpleResetPool<T, C> {
 
 	@SuppressWarnings("unchecked")
 	public void delete() {
-		for (int i = 0; i < size; i++) {
+		for (var i = 0; i < size; i++) {
 			delete((T) pool[i]);
+		}
+	}
+
+	protected void expand() {
+		var old	= size;
+
+		size	= old * 2;
+		pool	= Arrays.copyOf(pool, size);
+
+		for (var i = old; i < size; i ++) {
+			pool[i] = create(context, i);
 		}
 	}
 

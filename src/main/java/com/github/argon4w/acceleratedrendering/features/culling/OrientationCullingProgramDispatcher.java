@@ -38,7 +38,7 @@ public class OrientationCullingProgramDispatcher implements IPolygonProgramDispa
 		viewMatrixUniform	.uploadMatrix4f		(RenderSystem.getModelViewMatrix());
 		projectMatrixUniform.uploadMatrix4f		(RenderSystem.getProjectionMatrix());
 		polygonCountUniform	.uploadUnsignedInt	(polygonCount);
-		vertexOffsetUniform	.uploadUnsignedInt	(vertexOffset);
+		vertexOffsetUniform	.uploadUnsignedInt	((int) vertexOffset);
 
 		program.useProgram	();
 		program.dispatch	((polygonCount + GROUP_SIZE - 1) / GROUP_SIZE);

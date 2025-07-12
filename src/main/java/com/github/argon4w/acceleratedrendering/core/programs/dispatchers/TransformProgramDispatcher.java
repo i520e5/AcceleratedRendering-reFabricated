@@ -12,7 +12,9 @@ import static org.lwjgl.opengl.GL46.GL_SHADER_STORAGE_BUFFER;
 
 public class TransformProgramDispatcher {
 
-	private static	final int				GROUP_SIZE = 128;
+	public	static	final int				VERTEX_BUFFER_IN_INDEX	= 0;
+	public	static	final int				VARYING_BUFFER_INDEX	= 3;
+	private static	final int				GROUP_SIZE				= 128;
 
 	private			final ComputeProgram	program;
 	private			final Uniform			vertexCountUniform;
@@ -35,13 +37,14 @@ public class TransformProgramDispatcher {
 			vertexBuffer	.flush();
 			varyingBuffer	.flush();
 
-			vertexBuffer	.bindBase(GL_SHADER_STORAGE_BUFFER, 0);
-			varyingBuffer	.bindBase(GL_SHADER_STORAGE_BUFFER, 3);
+			vertexBuffer	.bindBase(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_IN_INDEX);
+			varyingBuffer	.bindBase(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_INDEX);
 
-			vertexCountUniform	.uploadUnsignedInt	(vertexCount);
-			vertexOffsetUniform	.uploadUnsignedInt	(builder.getVertexOffset());
+			builder				.allocateVertexOffset	();
+			vertexCountUniform	.uploadUnsignedInt		(vertexCount);
+			vertexOffsetUniform	.uploadUnsignedInt		((int) builder.getVertexOffset());
 
-			program				.dispatch			((vertexCount + GROUP_SIZE - 1) / GROUP_SIZE);
+			program				.dispatch				((vertexCount + GROUP_SIZE - 1) / GROUP_SIZE);
 		}
 
 		program.resetProgram();

@@ -1,16 +1,19 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools;
 
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffer;
-import com.github.argon4w.acceleratedrendering.core.backends.buffers.SegmentBuffer;
+import com.github.argon4w.acceleratedrendering.core.backends.buffers.MutableBuffer;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
 import com.github.argon4w.acceleratedrendering.core.utils.SimpleResetPool;
 import lombok.Getter;
 import org.apache.commons.lang3.mutable.MutableLong;
 
+import static org.lwjgl.opengl.GL44.GL_DYNAMIC_STORAGE_BIT;
+
 public class VertexBufferPool extends SimpleResetPool<VertexBufferPool.VertexBuffer, Void> {
 
 	private			final AcceleratedBufferSetPool.BufferSet	bufferSet;
-	@Getter private	final SegmentBuffer							vertexBufferOut;
+	@Getter private	final MutableBuffer							vertexBufferOut;
+	private			final MutableLong							vertexBufferSegments;
 	private			final MutableLong							vertexBufferOutSize;
 	private			final MutableLong							vertexBufferOutUsedSize;
 
@@ -18,14 +21,15 @@ public class VertexBufferPool extends SimpleResetPool<VertexBufferPool.VertexBuf
 		super(size, null);
 
 		this.bufferSet					= bufferSet;
-		this.vertexBufferOut			= new SegmentBuffer	(64L * size, size);
+		this.vertexBufferOut			= new MutableBuffer	(64L * size, GL_DYNAMIC_STORAGE_BIT);
+		this.vertexBufferSegments		= new MutableLong	(0L);
 		this.vertexBufferOutSize		= new MutableLong	(64L * size);
 		this.vertexBufferOutUsedSize	= new MutableLong	(0L);
 	}
 
 	public void prepare() {
-		vertexBufferOut.resizeTo	(vertexBufferOutSize.getValue());
-		vertexBufferOut.clearSegment();
+		vertexBufferOut		.resizeTo	(vertexBufferOutSize.getValue());
+		vertexBufferSegments.setValue	(0L);
 	}
 
 	@Override
@@ -60,6 +64,7 @@ public class VertexBufferPool extends SimpleResetPool<VertexBufferPool.VertexBuf
 		return vertexBufferOutUsedSize.addAndGet(vertexBuffer.getSize()) <= (2L * 1024L * 1024L * 1024L);
 	}
 
+	@Getter
 	public class VertexBuffer extends MappedBuffer {
 
 		private long offset;
@@ -91,16 +96,11 @@ public class VertexBufferPool extends SimpleResetPool<VertexBufferPool.VertexBuf
 
 		private void poolReset() {
 			super.reset();
-			offset = -1;
+			offset = -1L;
 		}
 
-		@Override
-		public int getOffset() {
-			if (offset == -1) {
-				offset = vertexBufferOut.getSegmentOffset(position / bufferSet.getVertexSize());
-			}
-
-			return (int) offset;
+		public void allocateOffset() {
+			offset = vertexBufferSegments.getAndAdd(position / bufferSet.getVertexSize());
 		}
 	}
 }

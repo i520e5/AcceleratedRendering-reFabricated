@@ -11,7 +11,8 @@ import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 
 public class FixedPolygonProgramDispatcher implements IPolygonProgramDispatcher {
 
-	private static	final int				GROUP_SIZE = 128;
+	public	static	final int				VARYING_BUFFER_INDEX	= 3;
+	private static	final int				GROUP_SIZE				= 128;
 
 	private			final VertexFormat.Mode	mode;
 	private			final ComputeProgram	program;
@@ -35,10 +36,10 @@ public class FixedPolygonProgramDispatcher implements IPolygonProgramDispatcher 
 		var vertexOffset	= builder.getVertexOffset	();
 		var polygonCount	= vertexCount / mode.primitiveLength;
 
-		builder.getVaryingBuffer().bindBase(GL_SHADER_STORAGE_BUFFER, 3);
+		builder.getVaryingBuffer().bindBase(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_INDEX);
 
 		polygonCountUniform.uploadUnsignedInt(polygonCount);
-		vertexOffsetUniform.uploadUnsignedInt(vertexOffset);
+		vertexOffsetUniform.uploadUnsignedInt((int) vertexOffset);
 
 		program.useProgram	();
 		program.dispatch	((polygonCount + GROUP_SIZE - 1) / GROUP_SIZE);

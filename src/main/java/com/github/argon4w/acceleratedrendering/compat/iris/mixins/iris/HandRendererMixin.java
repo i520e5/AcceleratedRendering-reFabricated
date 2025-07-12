@@ -35,13 +35,6 @@ public class HandRendererMixin {
 		CoreBuffers.POS_TEX				.drawBuffers();
 		CoreBuffers.POS_TEX_COLOR		.drawBuffers();
 		CoreBuffers.POS_COLOR_TEX_LIGHT	.drawBuffers();
-
-		CoreBuffers.ENTITY				.clearBuffers();
-		CoreBuffers.BLOCK				.clearBuffers();
-		CoreBuffers.POS					.clearBuffers();
-		CoreBuffers.POS_TEX				.clearBuffers();
-		CoreBuffers.POS_TEX_COLOR		.clearBuffers();
-		CoreBuffers.POS_COLOR_TEX_LIGHT	.clearBuffers();
 	}
 
 	@Inject(
@@ -65,12 +58,5 @@ public class HandRendererMixin {
 		CoreBuffers.POS_TEX				.drawBuffers();
 		CoreBuffers.POS_TEX_COLOR		.drawBuffers();
 		CoreBuffers.POS_COLOR_TEX_LIGHT	.drawBuffers();
-
-		CoreBuffers.ENTITY				.clearBuffers();
-		CoreBuffers.BLOCK				.clearBuffers();
-		CoreBuffers.POS					.clearBuffers();
-		CoreBuffers.POS_TEX				.clearBuffers();
-		CoreBuffers.POS_TEX_COLOR		.clearBuffers();
-		CoreBuffers.POS_COLOR_TEX_LIGHT	.clearBuffers();
 	}
 }

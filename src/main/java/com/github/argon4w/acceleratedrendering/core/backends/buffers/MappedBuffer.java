@@ -14,10 +14,10 @@ public class MappedBuffer extends MutableBuffer implements IClientBuffer {
 
 	private 		final 	int 	mapBits;
 
-			protected 		long 	address;
+	protected				long 	address;
 	@Getter protected 		long	position;
 
-	public int meshCount;
+	public					int		meshCount;
 
 	public MappedBuffer(long initialSize, boolean autoFlush) {
 		super(initialSize, autoFlush ? AUTO_FLUSH_BITS : VERB_FLUSH_BITS);
@@ -45,6 +45,11 @@ public class MappedBuffer extends MutableBuffer implements IClientBuffer {
 	}
 
 	@Override
+	public long addressAt(long position) {
+		return address + position;
+	}
+
+	@Override
 	public void beforeExpand() {
 		unmap();
 	}
@@ -52,11 +57,6 @@ public class MappedBuffer extends MutableBuffer implements IClientBuffer {
 	@Override
 	public void afterExpand() {
 		address = map();
-	}
-
-	@Override
-	public void bind(int target) {
-		throw new IllegalStateException("Buffer is mapped.");
 	}
 
 	public void flush() {
