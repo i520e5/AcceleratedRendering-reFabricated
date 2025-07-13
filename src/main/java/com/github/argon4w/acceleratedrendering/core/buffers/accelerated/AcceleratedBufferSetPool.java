@@ -6,10 +6,7 @@ import com.github.argon4w.acceleratedrendering.core.backends.VertexArray;
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.IServerBuffer;
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffer;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.DrawContextPool;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.ElementBufferPool;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.MappedBufferPool;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.VertexBufferPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.*;
 import com.github.argon4w.acceleratedrendering.core.buffers.environments.IBufferEnvironment;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.programs.extras.IExtraVertexData;
@@ -18,9 +15,9 @@ import com.mojang.blaze3d.vertex.VertexFormatElement;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import lombok.Getter;
 import net.minecraft.client.renderer.RenderType;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.mutable.MutableInt;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import static org.lwjgl.opengl.GL15.GL_ELEMENT_ARRAY_BUFFER;
@@ -59,8 +56,12 @@ public class AcceleratedBufferSetPool {
 
 		if (force) {
 			index		= size;
-			size		= size + 1;
-			bufferSets	= ArrayUtils.add(bufferSets, new BufferSet());
+			size		= size * 2;
+			bufferSets	= Arrays.copyOf(bufferSets, size);
+
+			for (var i = index; i < size; i++) {
+				bufferSets[i] = new BufferSet();
+			}
 		}
 
 		var bufferSet = bufferSets[index];
@@ -76,7 +77,7 @@ public class AcceleratedBufferSetPool {
 		public static	final	int											SHARING_BUFFER_INDEX	= 2;
 		public static	final	int											MESH_BUFFER_INDEX		= 4;
 
-		@Getter	private final 	int											size;
+		private			final	MeshUploaderPool							meshUploaderPool;
 		private			final 	DrawContextPool								drawContextPool;
 		private			final 	ElementBufferPool							elementBufferPool;
 		private			final 	MappedBuffer								sharingBuffer;
@@ -91,12 +92,13 @@ public class AcceleratedBufferSetPool {
 		private 				IMemoryLayout<VertexFormatElement>	layout;
 
 		public BufferSet() {
-			this.size				= CoreFeature.getPooledElementBufferSize();
-			this.drawContextPool	= new DrawContextPool					(this.size);
-			this.elementBufferPool	= new ElementBufferPool					(this.size);
+			var size				= CoreFeature.getPooledElementBufferSize();
+			this.meshUploaderPool	= new MeshUploaderPool					(this);
+			this.drawContextPool	= new DrawContextPool					(size);
+			this.elementBufferPool	= new ElementBufferPool					(size);
 			this.sharingBuffer		= new MappedBuffer						(64L);
-			this.varyingBuffer		= new MappedBufferPool					(this.size);
-			this.vertexBuffer		= new VertexBufferPool					(this.size, this);
+			this.varyingBuffer		= new MappedBufferPool					(size);
+			this.vertexBuffer		= new VertexBufferPool					(size, this);
 			this.vertexArray		= new VertexArray						();
 			this.sync				= new Sync								();
 			this.sharing			= new MutableInt						(0);
@@ -107,6 +109,7 @@ public class AcceleratedBufferSetPool {
 
 		public void reset() {
 			vertexArray			.unbindVertexArray	();
+			meshUploaderPool	.reset				();
 			drawContextPool		.reset				();
 			elementBufferPool	.reset				();
 			varyingBuffer		.reset				();
@@ -119,7 +122,6 @@ public class AcceleratedBufferSetPool {
 		public void bindTransformBuffers() {
 			vertexBuffer.getVertexBufferOut()		.bindBase(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_OUT_INDEX);
 			sharingBuffer							.bindBase(GL_SHADER_STORAGE_BUFFER, SHARING_BUFFER_INDEX);
-			bufferEnvironment.getServerMeshBuffer()	.bindBase(GL_SHADER_STORAGE_BUFFER, MESH_BUFFER_INDEX);
 		}
 
 		public void bindDrawBuffers() {
@@ -143,6 +145,10 @@ public class AcceleratedBufferSetPool {
 			sharingBuffer		.flush	();
 			vertexBuffer		.prepare();
 			elementBufferPool	.prepare();
+		}
+
+		public MeshUploaderPool.MeshUploader getMeshUploader() {
+			return meshUploaderPool.get();
 		}
 
 		public VertexBufferPool.VertexBuffer getVertexBuffer() {

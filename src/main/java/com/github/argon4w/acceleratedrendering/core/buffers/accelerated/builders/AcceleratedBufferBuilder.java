@@ -4,15 +4,18 @@ import com.github.argon4w.acceleratedrendering.core.CoreFeature;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.ElementBufferPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.MappedBufferPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.MeshUploaderPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.VertexBufferPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryInterface;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.SimpleMemoryInterface;
+import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import net.minecraft.client.renderer.RenderType;
@@ -22,20 +25,22 @@ import org.joml.Matrix4f;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Map;
 
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, VertexConsumer {
 
-	public static	final long										VARYING_SIZE		= 4L * 4L;
+	public static	final long										VARYING_SIZE		= 3L * 4L;
 	public static	final IMemoryInterface							VARYING_OFFSET		= new SimpleMemoryInterface(0L * 4L,		VARYING_SIZE);
 	public static	final IMemoryInterface							VARYING_SHARING		= new SimpleMemoryInterface(1L * 4L,		VARYING_SIZE);
-	public static	final IMemoryInterface							VARYING_MESH		= new SimpleMemoryInterface(2L * 4L, 		VARYING_SIZE);
-	public static	final IMemoryInterface							VARYING_FLAGS		= new SimpleMemoryInterface(3L * 4L,		VARYING_SIZE);
+	public static	final IMemoryInterface							VARYING_FLAGS		= new SimpleMemoryInterface(2L * 4L,		VARYING_SIZE);
 
 	public static	final long										SHARING_SIZE		= 4L * 4L * 4L + 4L * 3L * 4L;
 	public static	final IMemoryInterface							SHARING_TRANSFORM	= new SimpleMemoryInterface(0L,				SHARING_SIZE);
 	public static	final IMemoryInterface							SHARING_NORMAL		= new SimpleMemoryInterface(4L * 4L * 4L,	SHARING_SIZE);
 
+	private 		final Map<ServerMesh, MeshUploaderPool.MeshUploader>			meshUploaders;
 	@Getter private	final VertexBufferPool.VertexBuffer								vertexBuffer;
 	@Getter private	final MappedBufferPool.Pooled									varyingBuffer;
 	@Getter private	final ElementBufferPool.ElementSegment							elementSegment;
@@ -43,8 +48,8 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 
 	@EqualsAndHashCode.Include private 	final	IMemoryLayout<VertexFormatElement>	layout;
 	@EqualsAndHashCode.Include private	final	RenderType							renderType;
-	private 							final	VertexFormat.Mode					mode;
-	private								final	long								vertexSize;
+	@Getter private						final	VertexFormat.Mode					mode;
+	@Getter private						final	long								vertexSize;
 	private								final	int									polygonSize;
 	private								final	int									polygonElementCount;
 
@@ -56,7 +61,8 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 	private								final	IMemoryInterface					normalOffset;
 
 	private										int									elementCount;
-	@Getter private 							int									vertexCount;
+	@Getter private								int									meshVertexCount;
+	@Getter private								int									vertexCount;
 	private										long								vertexAddress;
 	private										long								sharingAddress;
 	private										int									activeSharing;
@@ -75,6 +81,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 			AcceleratedBufferSetPool.BufferSet		bufferSet,
 			RenderType								renderType
 	) {
+		this.meshUploaders			= new Reference2ObjectLinkedOpenHashMap<>();
 		this.vertexBuffer			= vertexBuffer;
 		this.varyingBuffer			= varyingBuffer;
 		this.elementSegment			= elementSegment;
@@ -96,6 +103,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		this.normalOffset			= this.layout.getElement		(VertexFormatElement.NORMAL);
 
 		this.elementCount			= 0;
+		this.meshVertexCount		= 0;
 		this.vertexCount			= 0;
 		this.vertexAddress			= -1;
 		this.sharingAddress			= -1;
@@ -131,7 +139,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 			float pZ
 	) {
 		var vertexAddress	= vertexBuffer	.reserve(vertexSize);
-		var varyingAddress	= varyingBuffer	.reserve(4L * 4L);
+		var varyingAddress	= varyingBuffer	.reserve(VARYING_SIZE);
 
 		this.vertexAddress	= vertexAddress;
 
@@ -141,7 +149,6 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 
 		VARYING_OFFSET	.putInt(varyingAddress, 0);
 		VARYING_SHARING	.putInt(varyingAddress, activeSharing);
-		VARYING_MESH	.putInt(varyingAddress, -1);
 
 		var data			= bufferSet	.getExtraVertex	(mode);
 		data							.addExtraVertex	(vertexAddress);
@@ -275,7 +282,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 			float	pNormalZ
 	) {
 		var vertexAddress	= vertexBuffer	.reserve		(vertexSize);
-		var varyingAddress	= varyingBuffer	.reserve		(4L * 4L);
+		var varyingAddress	= varyingBuffer	.reserve		(VARYING_SIZE);
 		var data			= bufferSet		.getExtraVertex	(mode);
 
 		data.addExtraVertex	(vertexAddress);
@@ -295,7 +302,6 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 
 		VARYING_OFFSET	.putInt		(varyingAddress,		0);
 		VARYING_SHARING	.putInt		(varyingAddress,		activeSharing);
-		VARYING_MESH	.putInt		(varyingAddress,		-1);
 
 		vertexCount		++;
 		elementCount	++;
@@ -346,7 +352,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 	) {
 		var bufferSize		= vertexSize * size;
 		var vertexAddress	= vertexBuffer	.reserve		(bufferSize);
-		var varyingAddress	= varyingBuffer	.reserve		(4L * 4L * size);
+		var varyingAddress	= varyingBuffer	.reserve		(VARYING_SIZE * size);
 		var data			= bufferSet		.getExtraVertex	(mode);
 
 		data			.addExtraVertex	(vertexAddress);
@@ -361,12 +367,12 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		colorOffset		.putInt			(vertexAddress,		FastColor.ABGR32.fromArgb32(color));
 		uv1Offset		.putInt			(vertexAddress,		overlay);
 		uv2Offset		.putInt			(vertexAddress,		light);
-
 		VARYING_SHARING	.putInt			(varyingAddress,	activeSharing);
-		VARYING_MESH	.putInt			(varyingAddress,	-1);
 
 		for (int i = 0; i < size; i++) {
-			VARYING_OFFSET.at(i).putInt(varyingAddress, i);
+			VARYING_OFFSET
+					.at		(i)
+					.putInt	(varyingAddress, i);
 		}
 
 		elementSegment	.countElements	(mode.indexCount(size));
@@ -375,34 +381,32 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 
 	@Override
 	public void addServerMesh(
-			int offset,
-			int size,
-			int color,
-			int light,
-			int overlay
+			ServerMesh	serverMesh,
+			int			color,
+			int			light,
+			int			overlay
 	) {
-		vertexBuffer.meshCount ++;
-		var meshOffset		= offset / vertexSize;
-		var vertexAddress	= vertexBuffer	.reserve		(vertexSize	* size);
-		var varyingAddress	= varyingBuffer	.reserve		(4L * 4L	* size);
-		var data			= bufferSet		.getExtraVertex	(mode);
+		var size			= (int) serverMesh	.size	();
+		var meshUploader	= meshUploaders		.get	(serverMesh);
+		meshVertexCount 	= meshVertexCount + size;
 
-		data			.addExtraVertex	(vertexAddress);
-		data			.addExtraVarying(varyingAddress);
+		if (meshUploader == null) {
+			meshUploader = bufferSet.getMeshUploader();
 
-		colorOffset		.putInt			(vertexAddress,		FastColor.ABGR32.fromArgb32(color));
-		uv1Offset		.putInt			(vertexAddress,		overlay);
-		uv2Offset		.putInt			(vertexAddress,		light);
-
-		VARYING_SHARING	.putInt			(varyingAddress,	activeSharing);
-		VARYING_MESH	.putInt			(varyingAddress,	(int) meshOffset);
-
-		for (var i = 0; i < size; i++) {
-			VARYING_OFFSET.at(i).putInt(varyingAddress, i);
+			meshUploaders	.put(serverMesh, meshUploader);
+			meshUploader	.set(
+					layout,
+					mode,
+					serverMesh
+			);
 		}
 
-		elementSegment	.countElements	(mode.indexCount(size));
-		vertexCount += size;
+		meshUploader	.addUpload		(
+				color,
+				light,
+				overlay,
+				activeSharing
+		);
 	}
 
 	@Override
@@ -447,7 +451,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 	}
 
 	public boolean isEmpty() {
-		return vertexCount == 0;
+		return (vertexCount + meshVertexCount) == 0;
 	}
 
 	public void allocateVertexOffset() {
@@ -456,5 +460,13 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 
 	public long getVertexOffset() {
 		return vertexBuffer.getOffset();
+	}
+
+	public Collection<MeshUploaderPool.MeshUploader> getMeshUploaders() {
+		return meshUploaders.values();
+	}
+
+	public int getTotalVertexCount() {
+		return vertexCount + meshVertexCount;
 	}
 }

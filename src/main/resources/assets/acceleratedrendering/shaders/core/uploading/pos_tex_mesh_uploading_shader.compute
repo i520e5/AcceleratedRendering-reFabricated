@@ -1,0 +1,92 @@
+#version 460 core
+
+struct Vertex {
+    float   x;
+    float   y;
+    float   z;
+    float   u0;
+    float   v0;
+};
+
+struct VaryingData {
+    int     offset;
+    int     sharing;
+    int     flags;
+};
+
+struct MeshInfo {
+    int     sharing;
+    uint    color;
+    uint    uv1;
+    uint    uv2;
+};
+
+layout(local_size_x = 128, local_size_y = 1) in;
+
+layout(binding=0, std430) writeonly buffer Vertices {
+    Vertex      vertices[];
+};
+
+layout(binding=3, std430) writeonly buffer Varyings {
+    VaryingData varyings[];
+};
+
+layout(binding=4, std430) readonly buffer Meshes {
+    Vertex      meshVertices[];
+};
+
+layout(binding=7, std430) readonly buffer MeshInfos {
+    MeshInfo    meshInfos[];
+};
+
+layout(binding=8, std430) readonly buffer ExtraVertices {
+    Vertex      extraVertices[];
+};
+
+layout(binding=9, std430) readonly buffer ExtraVaryings {
+    VaryingData extraVaryings[];
+};
+
+layout(location=0) uniform uint meshCount;
+layout(location=1) uniform uint meshSize;
+layout(location=2) uniform uint vertexOffset;
+
+void main() {
+    uint        meshIndex       = gl_GlobalInvocationID.x;
+    uint        vertexIndex     = gl_GlobalInvocationID.y;
+
+    if (meshIndex >= meshCount) {
+        return;
+    }
+
+    Vertex      vertex          = meshVertices  [vertexIndex];
+    MeshInfo    meshInfo        = meshInfos     [meshIndex];
+    Vertex      extraVertex     = extraVertices [meshIndex];
+    VaryingData extraVarying    = extraVaryings [meshIndex];
+    uint        index           = vertexIndex + meshIndex * meshSize + vertexOffset;
+
+    // vec4        colorIn         = unpackUnorm4x8    (meshInfo   .color);
+    // vec4        colorMesh       = unpackUnorm4x8    (vertex     .color);
+    // uvec2       uv2In           = floatBitsToUint   (unpackSnorm2x16(meshInfo   .uv2));
+    // uvec2       uv2Mesh         = floatBitsToUint   (unpackSnorm2x16(vertex     .uv2));
+
+    // vec4        colorOut        = colorIn * colorMesh;
+    // uvec2       uv2Out          = max(uv2In, uv2Mesh);
+
+    vertices[index].x       = vertex.x;
+    vertices[index].y       = vertex.y;
+    vertices[index].z       = vertex.z;
+
+    // vertices[index].color   = packUnorm4x8(colorOut);
+
+    vertices[index].u0      = vertex.u0;
+    vertices[index].v0      = vertex.v0;
+
+    // vertices[index].uv1     = meshInfo  .uv1;
+    // vertices[index].uv2     = packSnorm2x16(uintBitsToFloat(uv2Out));
+    // vertices[index].normal  = vertex    .normal;
+
+    varyings[index].offset  = 0;
+    varyings[index].sharing = meshInfo      .sharing;
+    varyings[index].flags   = extraVarying  .flags;
+}

@@ -8,6 +8,7 @@ import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramSelector;
 import com.github.argon4w.acceleratedrendering.core.programs.culling.LoadCullingProgramSelectorEvent;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.TransformProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.extras.IExtraVertexData;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.IPolygonProcessor;
@@ -25,17 +26,23 @@ public class VanillaBufferEnvironment implements IBufferEnvironment {
 	private final VertexFormat							vertexFormat;
 	private final IMemoryLayout<VertexFormatElement>	layout;
 
+	private final MeshUploadingProgramDispatcher		meshUploadingProgramDispatcher;
 	private final TransformProgramDispatcher			transformProgramDispatcher;
 	private final ICullingProgramSelector				cullingProgramSelector;
 	private final IPolygonProcessor						polygonProcessor;
 
-	public VanillaBufferEnvironment(VertexFormat vertexFormat, ResourceLocation key) {
-		this.vertexFormat				= vertexFormat;
-		this.layout						= new VertexFormatMemoryLayout	(vertexFormat);
+	public VanillaBufferEnvironment(
+			VertexFormat		vertexFormat,
+			ResourceLocation	meshUploadingProgramKey,
+			ResourceLocation	transformProgramKey
+	) {
+		this.vertexFormat					= vertexFormat;
+		this.layout							= new VertexFormatMemoryLayout	(vertexFormat);
 
-		this.transformProgramDispatcher	= new TransformProgramDispatcher(key);
-		this.cullingProgramSelector		= ModLoader.postEventWithReturn	(new LoadCullingProgramSelectorEvent(this.vertexFormat)).getSelector();
-		this.polygonProcessor			= ModLoader.postEventWithReturn	(new LoadPolygonProcessorEvent		(this.vertexFormat)).getProcessor();
+		this.meshUploadingProgramDispatcher	= new MeshUploadingProgramDispatcher(meshUploadingProgramKey);
+		this.transformProgramDispatcher		= new TransformProgramDispatcher	(transformProgramKey);
+		this.cullingProgramSelector			= ModLoader.postEventWithReturn		(new LoadCullingProgramSelectorEvent(this.vertexFormat)).getSelector();
+		this.polygonProcessor				= ModLoader.postEventWithReturn		(new LoadPolygonProcessorEvent		(this.vertexFormat)).getProcessor();
 	}
 
 	@Override
@@ -59,8 +66,8 @@ public class VanillaBufferEnvironment implements IBufferEnvironment {
 	}
 
 	@Override
-	public IServerBuffer getServerMeshBuffer() {
-		return ServerMesh.Builder.INSTANCE.serverBuffers.getOrDefault(layout, EmptyServerBuffer.INSTANCE);
+	public MeshUploadingProgramDispatcher selectMeshUploadingProgramDispatcher() {
+		return meshUploadingProgramDispatcher;
 	}
 
 	@Override

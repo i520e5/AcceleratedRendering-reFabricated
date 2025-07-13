@@ -9,6 +9,7 @@ import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramSelector;
 import com.github.argon4w.acceleratedrendering.core.programs.culling.LoadCullingProgramSelectorEvent;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.TransformProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.extras.CompositeExtraVertex;
 import com.github.argon4w.acceleratedrendering.core.programs.extras.IExtraVertexData;
@@ -33,13 +34,15 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 			IBufferEnvironment	vanillaSubSet,
 			VertexFormat		vanillaVertexFormat,
 			VertexFormat		irisVertexFormat,
-			ResourceLocation	transformProgram
+			ResourceLocation	meshUploadingProgramKey,
+			ResourceLocation	transformProgramKey
 	) {
 		this.vanillaSubSet	= vanillaSubSet;
 		this.irisSubSet		= new IrisSubSet(
 				vanillaVertexFormat,
 				irisVertexFormat,
-				transformProgram
+				meshUploadingProgramKey,
+				transformProgramKey
 		);
 	}
 
@@ -68,8 +71,8 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 	}
 
 	@Override
-	public IServerBuffer getServerMeshBuffer() {
-		return getSubSet().getServerMeshBuffer();
+	public MeshUploadingProgramDispatcher selectMeshUploadingProgramDispatcher() {
+		return getSubSet().selectMeshUploadingProgramDispatcher();
 	}
 
 	@Override
@@ -103,6 +106,7 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 		private final VertexFormat							irisVertexFormat;
 		private final IMemoryLayout<VertexFormatElement>	layout;
 
+		private final MeshUploadingProgramDispatcher		meshUploadingProgramDispatcher;
 		private final TransformProgramDispatcher			transformProgramDispatcher;
 		private final ICullingProgramSelector				cullingProgramSelector;
 		private final IPolygonProcessor						polygonProcessor;
@@ -110,15 +114,18 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 		public IrisSubSet(
 				VertexFormat		vanillaVertexFormat,
 				VertexFormat		irisVertexFormat,
-				ResourceLocation	transformProgram
-		) {
-			this.vanillaVertexFormat		= vanillaVertexFormat;
-			this.irisVertexFormat			= irisVertexFormat;
-			this.layout						= new VertexFormatMemoryLayout(irisVertexFormat);
+				ResourceLocation	meshUploadingProgramKey,
+				ResourceLocation	transformProgramKey
 
-			this.transformProgramDispatcher	= new TransformProgramDispatcher(transformProgram);
-			this.cullingProgramSelector		= ModLoader.postEventWithReturn	(new LoadCullingProgramSelectorEvent(this.irisVertexFormat)).getSelector();
-			this.polygonProcessor			= ModLoader.postEventWithReturn	(new LoadPolygonProcessorEvent		(this.irisVertexFormat)).getProcessor();
+		) {
+			this.vanillaVertexFormat			= vanillaVertexFormat;
+			this.irisVertexFormat				= irisVertexFormat;
+			this.layout							= new VertexFormatMemoryLayout		(irisVertexFormat);
+
+			this.meshUploadingProgramDispatcher	= new MeshUploadingProgramDispatcher(meshUploadingProgramKey);
+			this.transformProgramDispatcher		= new TransformProgramDispatcher	(transformProgramKey);
+			this.cullingProgramSelector			= ModLoader.postEventWithReturn		(new LoadCullingProgramSelectorEvent(this.irisVertexFormat)).getSelector();
+			this.polygonProcessor				= ModLoader.postEventWithReturn		(new LoadPolygonProcessorEvent		(this.irisVertexFormat)).getProcessor();
 		}
 
 		@Override
@@ -147,8 +154,8 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 		}
 
 		@Override
-		public IServerBuffer getServerMeshBuffer() {
-			return ServerMesh.Builder.INSTANCE.serverBuffers.getOrDefault(layout, EmptyServerBuffer.INSTANCE);
+		public MeshUploadingProgramDispatcher selectMeshUploadingProgramDispatcher() {
+			return meshUploadingProgramDispatcher;
 		}
 
 		@Override

@@ -17,8 +17,6 @@ public class MappedBuffer extends MutableBuffer implements IClientBuffer {
 	protected				long 	address;
 	@Getter protected 		long	position;
 
-	public					int		meshCount;
-
 	public MappedBuffer(long initialSize, boolean autoFlush) {
 		super(initialSize, autoFlush ? AUTO_FLUSH_BITS : VERB_FLUSH_BITS);
 
@@ -69,6 +67,5 @@ public class MappedBuffer extends MutableBuffer implements IClientBuffer {
 
 	public void reset() {
 		position = 0;
-		meshCount = 0;
 	}
 }

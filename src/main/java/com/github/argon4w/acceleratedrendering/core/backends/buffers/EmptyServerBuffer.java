@@ -12,12 +12,17 @@ public class EmptyServerBuffer implements IServerBuffer {
 	}
 
 	@Override
+	public void delete() {
+
+	}
+
+	@Override
 	public void bind(int target) {
 
 	}
 
 	@Override
-	public void subData(long offset, ByteBuffer data) {
+	public void data(ByteBuffer data) {
 
 	}
 

@@ -15,6 +15,7 @@ public class TransformProgramDispatcher {
 	public	static	final int				VERTEX_BUFFER_IN_INDEX	= 0;
 	public	static	final int				VARYING_BUFFER_INDEX	= 3;
 	private static	final int				GROUP_SIZE				= 128;
+	private static	final int				DISPATCH_COUNT_Y_Z		= 1;
 
 	private			final ComputeProgram	program;
 	private			final Uniform			vertexCountUniform;
@@ -30,9 +31,9 @@ public class TransformProgramDispatcher {
 		program.useProgram();
 
 		for (var builder : builders) {
-			var vertexCount		= builder.getVertexCount	();
-			var vertexBuffer	= builder.getVertexBuffer	();
-			var varyingBuffer	= builder.getVaryingBuffer	();
+			var vertexCount		= builder.getTotalVertexCount	();
+			var vertexBuffer	= builder.getVertexBuffer		();
+			var varyingBuffer	= builder.getVaryingBuffer		();
 
 			vertexBuffer	.flush();
 			varyingBuffer	.flush();
@@ -44,7 +45,11 @@ public class TransformProgramDispatcher {
 			vertexCountUniform	.uploadUnsignedInt		(vertexCount);
 			vertexOffsetUniform	.uploadUnsignedInt		((int) builder.getVertexOffset());
 
-			program				.dispatch				((vertexCount + GROUP_SIZE - 1) / GROUP_SIZE);
+			program				.dispatch				(
+					(vertexCount + GROUP_SIZE - 1) / GROUP_SIZE,
+					DISPATCH_COUNT_Y_Z,
+					DISPATCH_COUNT_Y_Z
+			);
 		}
 
 		program.resetProgram();

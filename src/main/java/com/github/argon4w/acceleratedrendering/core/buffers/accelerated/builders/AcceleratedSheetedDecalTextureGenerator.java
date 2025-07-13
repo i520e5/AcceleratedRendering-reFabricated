@@ -1,5 +1,6 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders;
 
+import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.ExtensionMethod;
@@ -86,17 +87,15 @@ public class AcceleratedSheetedDecalTextureGenerator extends AcceleratedVertexCo
 
 	@Override
 	public void addServerMesh(
-			int offset,
-			int size,
-			int color,
-			int light,
-			int overlay
+			ServerMesh	serverMesh,
+			int			color,
+			int			light,
+			int			overlay
 	) {
 		getDelegate				()
 				.getAccelerated	()
 				.addServerMesh	(
-						offset,
-						size,
+						serverMesh,
 						-1,
 						light,
 						overlay

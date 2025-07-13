@@ -49,13 +49,14 @@ public class ImmutableBuffer implements IServerBuffer {
 		glUnmapNamedBuffer(bufferHandle);
 	}
 
-	public void delete() {
-		glDeleteBuffers(bufferHandle);
-	}
-
 	@Override
 	public int getBufferHandle() {
 		return bufferHandle;
+	}
+
+	@Override
+	public void delete() {
+		glDeleteBuffers(bufferHandle);
 	}
 
 	@Override
@@ -64,10 +65,10 @@ public class ImmutableBuffer implements IServerBuffer {
 	}
 
 	@Override
-	public void subData(long offset, ByteBuffer data) {
+	public void data(ByteBuffer data) {
 		glNamedBufferSubData(
 				bufferHandle,
-				offset,
+				0,
 				data
 		);
 	}

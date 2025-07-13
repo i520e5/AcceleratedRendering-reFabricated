@@ -1,33 +1,26 @@
 package com.github.argon4w.acceleratedrendering.core.meshes;
 
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.IServerBuffer;
-import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffer;
+import com.github.argon4w.acceleratedrendering.core.backends.buffers.MutableBuffer;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IAcceleratedVertexConsumer;
-import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.meshes.collectors.IMeshCollector;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import lombok.AllArgsConstructor;
-import org.lwjgl.system.MemoryUtil;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import java.util.Map;
+import java.util.List;
 
-@AllArgsConstructor
-public class ServerMesh implements IMesh {
+import static org.lwjgl.opengl.GL44.GL_DYNAMIC_STORAGE_BIT;
 
-	private final int size;
-	private final int offset;
+public record ServerMesh(long size, IServerBuffer meshBuffer) implements IMesh {
 
 	@Override
 	public void write(
-			IAcceleratedVertexConsumer	extension,
-			int							color,
-			int							light,
-			int							overlay
+			IAcceleratedVertexConsumer extension,
+			int color,
+			int light,
+			int overlay
 	) {
 		extension.addServerMesh(
-				offset,
-				size,
+				this,
 				color,
 				light,
 				overlay
@@ -36,12 +29,12 @@ public class ServerMesh implements IMesh {
 
 	public static class Builder implements IMesh.Builder {
 
-		public static	final Builder													INSTANCE = new Builder();
+		public static final Builder INSTANCE = new Builder();
 
-		public			final Map<IMemoryLayout<VertexFormatElement>, IServerBuffer>	serverBuffers;
+		private final List<ServerMesh> meshes;
 
 		private Builder() {
-			this.serverBuffers = new Object2ObjectOpenHashMap<>();
+			this.meshes = new ObjectArrayList<>();
 		}
 
 		@Override
@@ -60,31 +53,23 @@ public class ServerMesh implements IMesh {
 				return EmptyMesh.INSTANCE;
 			}
 
-			var clientBuffer = result						.byteBuffer();
-			var serverBuffer = (MappedBuffer) serverBuffers	.get(collector.getLayout());
+			var clientBuffer	= result.byteBuffer	();
+			var serverBuffer	= new MutableBuffer	(clientBuffer.capacity(),	GL_DYNAMIC_STORAGE_BIT);
+			var mesh			= new ServerMesh	(vertexCount,				serverBuffer);
 
-			if (serverBuffer == null) {
-				serverBuffer = new MappedBuffer	(1024L, true);
-				serverBuffers.put				(collector.getLayout(), serverBuffer);
-			}
+			meshes		.add	(mesh);
+			serverBuffer.data	(clientBuffer);
+			builder		.close	();
 
-			var capacity = clientBuffer.capacity	();
-			var position = serverBuffer.getPosition();
-
-			MemoryUtil.memCopy(
-					MemoryUtil.memAddress0	(clientBuffer),
-					serverBuffer.reserve	(capacity),
-					capacity
-			);
-
-			builder.close();
-			return new ServerMesh(vertexCount, (int) position);
+			return mesh;
 		}
 
 		@Override
 		public void close() {
-			for (var buffer : serverBuffers.values()) {
-				((MappedBuffer) buffer).delete();
+			for (var mesh : meshes) {
+				mesh
+						.meshBuffer
+						.delete();
 			}
 		}
 	}

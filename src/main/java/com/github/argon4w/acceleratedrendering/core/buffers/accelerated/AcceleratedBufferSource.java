@@ -110,9 +110,10 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 				continue;
 			}
 
-			bufferSet											.prepare				();
-			bufferSet											.bindTransformBuffers	();
-			bufferEnvironment.selectTransformProgramDispatcher().dispatch				(builders.values());
+			bufferSet													.prepare				();
+			bufferSet													.bindTransformBuffers	();
+			bufferEnvironment.selectMeshUploadingProgramDispatcher	()	.dispatch				(builders.values());
+			bufferEnvironment.selectTransformProgramDispatcher		()	.dispatch				(builders.values());
 
 			for (var renderType : builders.keySet()) {
 				var builder			= builders	.get				(renderType);

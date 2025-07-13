@@ -35,13 +35,14 @@ public class MutableBuffer extends MutableSize implements IServerBuffer {
 		glBuffer.unmap();
 	}
 
-	public void delete() {
-		glBuffer.delete();
-	}
-
 	@Override
 	public int getBufferHandle() {
 		return glBuffer.getBufferHandle();
+	}
+
+	@Override
+	public void delete() {
+		glBuffer.delete();
 	}
 
 	@Override
@@ -50,8 +51,8 @@ public class MutableBuffer extends MutableSize implements IServerBuffer {
 	}
 
 	@Override
-	public void subData(long offset, ByteBuffer data) {
-		glBuffer.subData(offset, data);
+	public void data(ByteBuffer data) {
+		glBuffer.data(data);
 	}
 
 	@Override

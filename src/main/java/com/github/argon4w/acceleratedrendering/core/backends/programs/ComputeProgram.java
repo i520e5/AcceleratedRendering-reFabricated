@@ -15,11 +15,15 @@ public class ComputeProgram {
 		this.barrierFlags	= barrierFlags;
 	}
 
-	public void dispatch(int count) {
+	public void dispatch(
+			int countX,
+			int countY,
+			int countZ
+	) {
 		glDispatchCompute(
-				count,
-				1,
-				1
+				countX,
+				countY,
+				countZ
 		);
 	}
 

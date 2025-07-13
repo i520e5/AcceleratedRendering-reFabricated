@@ -11,7 +11,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class OrientationCullingProgramDispatcher implements IPolygonProgramDispatcher {
 
-	private static  final int				GROUP_SIZE = 128;
+	private static  final int				GROUP_SIZE 			= 128;
+	private static	final int				DISPATCH_COUNT_Y_Z	= 1;
 
 	private			final VertexFormat.Mode	mode;
 	private			final ComputeProgram	program;
@@ -31,8 +32,8 @@ public class OrientationCullingProgramDispatcher implements IPolygonProgramDispa
 
 	@Override
 	public int dispatch(AcceleratedBufferBuilder builder) {
-		var vertexCount		= builder.getVertexCount	();
-		var vertexOffset	= builder.getVertexOffset	();
+		var vertexCount		= builder.getTotalVertexCount	();
+		var vertexOffset	= builder.getVertexOffset		();
 		var polygonCount	= vertexCount / mode.primitiveLength;
 
 		viewMatrixUniform	.uploadMatrix4f		(RenderSystem.getModelViewMatrix());
@@ -41,7 +42,11 @@ public class OrientationCullingProgramDispatcher implements IPolygonProgramDispa
 		vertexOffsetUniform	.uploadUnsignedInt	((int) vertexOffset);
 
 		program.useProgram	();
-		program.dispatch	((polygonCount + GROUP_SIZE - 1) / GROUP_SIZE);
+		program.dispatch	(
+				(polygonCount + GROUP_SIZE - 1) / GROUP_SIZE,
+				DISPATCH_COUNT_Y_Z,
+				DISPATCH_COUNT_Y_Z
+		);
 		program.resetProgram();
 
 		return program.getBarrierFlags();

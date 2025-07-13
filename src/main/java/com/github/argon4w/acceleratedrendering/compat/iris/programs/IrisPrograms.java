@@ -27,6 +27,9 @@ public class IrisPrograms {
 	public static final ResourceLocation IRIS_ENTITY_TRIANGLE_PROCESSING_KEY	= ResourceLocationUtils.create("compat_entity_triangle_processing_iris");
 	public static final ResourceLocation IRIS_GLYPH_QUAD_PROCESSING_KEY			= ResourceLocationUtils.create("compat_glyph_quad_processing_iris");
 	public static final ResourceLocation IRIS_GLYPH_TRIANGLE_PROCESSING_KEY		= ResourceLocationUtils.create("compat_glyph_triangle_processing_iris");
+	public static final ResourceLocation IRIS_BLOCK_MESH_UPLOADING_KEY			= ResourceLocationUtils.create("compat_block_mesh_uploading_iris");
+	public static final ResourceLocation IRIS_ENTITY_MESH_UPLOADING_KEY			= ResourceLocationUtils.create("compat_entity_mesh_uploading_iris");
+	public static final ResourceLocation IRIS_GLYPH_MESH_UPLOADING_KEY			= ResourceLocationUtils.create("compat_glyph_mesh_uploading_iris");
 
 	@SubscribeEvent
 	public static void onLoadComputeShaders(LoadComputeShaderEvent event) {
@@ -109,6 +112,24 @@ public class IrisPrograms {
 		event.loadComputeShader(
 				IRIS_GLYPH_TRIANGLE_PROCESSING_KEY,
 				ResourceLocationUtils	.create("shaders/compat/processing/iris_glyph_triangle_processing_shader.compute"),
+				BarrierFlags			.SHADER_STORAGE
+		);
+
+		event.loadComputeShader(
+				IRIS_BLOCK_MESH_UPLOADING_KEY,
+				ResourceLocationUtils	.create("shaders/compat/uploading/iris_block_mesh_uploading_shader.compute"),
+				BarrierFlags			.SHADER_STORAGE
+		);
+
+		event.loadComputeShader(
+				IRIS_ENTITY_MESH_UPLOADING_KEY,
+				ResourceLocationUtils	.create("shaders/compat/uploading/iris_entity_mesh_uploading_shader.compute"),
+				BarrierFlags			.SHADER_STORAGE
+		);
+
+		event.loadComputeShader(
+				IRIS_GLYPH_MESH_UPLOADING_KEY,
+				ResourceLocationUtils	.create("shaders/compat/uploading/iris_glyph_mesh_uploading_shader.compute"),
 				BarrierFlags			.SHADER_STORAGE
 		);
 	}
