@@ -22,6 +22,7 @@ public class IrisCullingProgramDispatcher implements IPolygonProgramDispatcher {
 	private			final Uniform			projectMatrixUniform;
 	private			final Uniform			polygonCountUniform;
 	private			final Uniform			vertexOffsetUniform;
+	private			final Uniform			varyingOffsetUniform;
 
 	public IrisCullingProgramDispatcher(VertexFormat.Mode mode, ResourceLocation key) {
 		this.mode					= mode;
@@ -30,19 +31,21 @@ public class IrisCullingProgramDispatcher implements IPolygonProgramDispatcher {
 		this.projectMatrixUniform	= this.program				.getUniform("projectMatrix");
 		this.polygonCountUniform	= this.program				.getUniform("polygonCount");
 		this.vertexOffsetUniform	= this.program				.getUniform("vertexOffset");
+		this.varyingOffsetUniform	= this.program				.getUniform("varyingOffset");
 	}
 
 	@Override
 	public int dispatch(AcceleratedBufferBuilder builder) {
 		var vertexCount		= builder				.getTotalVertexCount				();
-		var vertexOffset	= builder				.getVertexOffset					();
 		var polygonCount	= vertexCount / mode.primitiveLength;
 		var shadowState		= ShadowRenderingState	.areShadowsCurrentlyBeingRendered	();
 
-		viewMatrixUniform	.uploadMatrix4f		(shadowState ? ShadowRenderer.MODELVIEW		: RenderSystem.getModelViewMatrix());
-		projectMatrixUniform.uploadMatrix4f		(shadowState ? ShadowRenderer.PROJECTION	: RenderSystem.getProjectionMatrix());
+		viewMatrixUniform	.uploadMatrix4f		(shadowState ? ShadowRenderer.MODELVIEW		: RenderSystem.getModelViewMatrix	());
+		projectMatrixUniform.uploadMatrix4f		(shadowState ? ShadowRenderer.PROJECTION	: RenderSystem.getProjectionMatrix	());
+
 		polygonCountUniform	.uploadUnsignedInt	(polygonCount);
-		vertexOffsetUniform	.uploadUnsignedInt	((int) vertexOffset);
+		vertexOffsetUniform	.uploadUnsignedInt	((int) builder.getVertexBuffer()	.getOffset());
+		varyingOffsetUniform.uploadUnsignedInt	((int) builder.getVaryingBuffer()	.getOffset());
 
 		program.useProgram	();
 		program.dispatch	(

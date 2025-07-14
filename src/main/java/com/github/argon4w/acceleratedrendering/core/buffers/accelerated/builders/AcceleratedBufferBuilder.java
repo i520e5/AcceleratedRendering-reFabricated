@@ -3,9 +3,8 @@ package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builder
 import com.github.argon4w.acceleratedrendering.core.CoreFeature;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.ElementBufferPool;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.MappedBufferPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.MeshUploaderPool;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.VertexBufferPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.StagingBufferPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryInterface;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
@@ -40,11 +39,11 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 	public static	final IMemoryInterface							SHARING_TRANSFORM	= new SimpleMemoryInterface(0L,				SHARING_SIZE);
 	public static	final IMemoryInterface							SHARING_NORMAL		= new SimpleMemoryInterface(4L * 4L * 4L,	SHARING_SIZE);
 
-	private 		final Map<ServerMesh, MeshUploaderPool.MeshUploader>			meshUploaders;
-	@Getter private	final VertexBufferPool.VertexBuffer								vertexBuffer;
-	@Getter private	final MappedBufferPool.Pooled									varyingBuffer;
-	@Getter private	final ElementBufferPool.ElementSegment							elementSegment;
-	private			final AcceleratedBufferSetPool.BufferSet						bufferSet;
+	@Getter private final Map<ServerMesh, MeshUploaderPool.MeshUploader>			meshUploaders;
+	@Getter private	final StagingBufferPool			.StagingBuffer					vertexBuffer;
+	@Getter private	final StagingBufferPool			.StagingBuffer					varyingBuffer;
+	@Getter private	final ElementBufferPool			.ElementSegment					elementSegment;
+	private			final AcceleratedBufferSetPool	.BufferSet						bufferSet;
 
 	@EqualsAndHashCode.Include private 	final	IMemoryLayout<VertexFormatElement>	layout;
 	@EqualsAndHashCode.Include private	final	RenderType							renderType;
@@ -75,8 +74,8 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 	private								final	Matrix3f							cachedNormalValue;
 
 	public AcceleratedBufferBuilder(
-			VertexBufferPool		.VertexBuffer	vertexBuffer,
-			MappedBufferPool		.Pooled			varyingBuffer,
+			StagingBufferPool		.StagingBuffer	vertexBuffer,
+			StagingBufferPool		.StagingBuffer	varyingBuffer,
 			ElementBufferPool		.ElementSegment	elementSegment,
 			AcceleratedBufferSetPool.BufferSet		bufferSet,
 			RenderType								renderType
@@ -393,8 +392,8 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		if (meshUploader == null) {
 			meshUploader = bufferSet.getMeshUploader();
 
-			meshUploaders	.put(serverMesh, meshUploader);
-			meshUploader	.set(
+			meshUploaders			.put			(serverMesh, meshUploader);
+			meshUploader			.set			(
 					layout,
 					mode,
 					serverMesh
@@ -452,18 +451,6 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 
 	public boolean isEmpty() {
 		return (vertexCount + meshVertexCount) == 0;
-	}
-
-	public void allocateVertexOffset() {
-		vertexBuffer.allocateOffset();
-	}
-
-	public long getVertexOffset() {
-		return vertexBuffer.getOffset();
-	}
-
-	public Collection<MeshUploaderPool.MeshUploader> getMeshUploaders() {
-		return meshUploaders.values();
 	}
 
 	public int getTotalVertexCount() {

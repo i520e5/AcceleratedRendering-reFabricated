@@ -34,13 +34,12 @@ public class FixedPolygonProgramDispatcher implements IPolygonProgramDispatcher 
 	@Override
 	public int dispatch(AcceleratedBufferBuilder builder) {
 		var vertexCount		= builder.getTotalVertexCount	();
-		var vertexOffset	= builder.getVertexOffset		();
 		var polygonCount	= vertexCount / mode.primitiveLength;
 
 		builder.getVaryingBuffer().bindBase(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_INDEX);
 
 		polygonCountUniform.uploadUnsignedInt(polygonCount);
-		vertexOffsetUniform.uploadUnsignedInt((int) vertexOffset);
+		vertexOffsetUniform.uploadUnsignedInt((int) builder.getVertexBuffer().getOffset());
 
 		program.useProgram	();
 		program.dispatch	(

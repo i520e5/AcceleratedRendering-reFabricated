@@ -44,10 +44,10 @@ public class MeshUploaderPool extends SimpleResetPool<MeshUploaderPool.MeshUploa
 
 	public static class MeshUploader {
 
-		public static	final	int									MESH_BUFFER_INDEX			= 4;
-		public static	final	int									MESH_INFO_BUFFER_INDEX		= 7;
-		public static	final	int									EXTRA_VERTEX_BUFFER_INDEX	= 8;
-		public static	final	int									EXTRA_VARYING_BUFFER_INDEX	= 9;
+		public static	final	int									MESH_BUFFER_INDEX			= 7;
+		public static	final	int									MESH_INFO_BUFFER_INDEX		= 8;
+		public static	final	int									EXTRA_VERTEX_BUFFER_INDEX	= 9;
+		public static	final	int									EXTRA_VARYING_BUFFER_INDEX	= 10;
 
 		public static	final	long								MESH_INFO_SIZE		= 4L * 4L;
 		public static	final	IMemoryInterface					MESH_INFO_SHARING	= new SimpleMemoryInterface(0L * 4L, MESH_INFO_SIZE);

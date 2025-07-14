@@ -80,8 +80,7 @@ public class ElementBufferPool extends SimpleResetPool<ElementBufferPool.Element
 		}
 
 		private void reset() {
-			bytes	= 0L;
-			offset	= -1L;
+			bytes = 0L;
 		}
 
 		public void allocateOffset() {

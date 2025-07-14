@@ -20,36 +20,38 @@ public class TransformProgramDispatcher {
 	private			final ComputeProgram	program;
 	private			final Uniform			vertexCountUniform;
 	private			final Uniform			vertexOffsetUniform;
+	private			final Uniform			varyingOffsetUniform;
 
 	public TransformProgramDispatcher(ResourceLocation key) {
 		this.program				= ComputeShaderProgramLoader.getProgram(key);
 		this.vertexCountUniform		= program					.getUniform("vertexCount");
 		this.vertexOffsetUniform	= program					.getUniform("vertexOffset");
+		this.varyingOffsetUniform	= program					.getUniform("varyingOffset");
 	}
 
 	public void dispatch(Collection<AcceleratedBufferBuilder> builders) {
 		program.useProgram();
 
 		for (var builder : builders) {
-			var vertexCount		= builder.getTotalVertexCount	();
-			var vertexBuffer	= builder.getVertexBuffer		();
-			var varyingBuffer	= builder.getVaryingBuffer		();
+			var vertexCount		= builder.getVertexCount	();
+			var vertexBuffer	= builder.getVertexBuffer	();
+			var varyingBuffer	= builder.getVaryingBuffer	();
 
-			vertexBuffer	.flush();
-			varyingBuffer	.flush();
+			if (vertexCount != 0) {
 
-			vertexBuffer	.bindBase(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_IN_INDEX);
-			varyingBuffer	.bindBase(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_INDEX);
+				vertexBuffer		.bindBase			(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_IN_INDEX);
+				varyingBuffer		.bindBase			(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_INDEX);
 
-			builder				.allocateVertexOffset	();
-			vertexCountUniform	.uploadUnsignedInt		(vertexCount);
-			vertexOffsetUniform	.uploadUnsignedInt		((int) builder.getVertexOffset());
+				vertexCountUniform	.uploadUnsignedInt	(vertexCount);
+				vertexOffsetUniform	.uploadUnsignedInt	((int) vertexBuffer	.getOffset());
+				varyingOffsetUniform.uploadUnsignedInt	((int) varyingBuffer.getOffset());
 
-			program				.dispatch				(
-					(vertexCount + GROUP_SIZE - 1) / GROUP_SIZE,
-					DISPATCH_COUNT_Y_Z,
-					DISPATCH_COUNT_Y_Z
-			);
+				program.dispatch(
+						(vertexCount + GROUP_SIZE - 1) / GROUP_SIZE,
+						DISPATCH_COUNT_Y_Z,
+						DISPATCH_COUNT_Y_Z
+				);
+			}
 		}
 
 		program.resetProgram();

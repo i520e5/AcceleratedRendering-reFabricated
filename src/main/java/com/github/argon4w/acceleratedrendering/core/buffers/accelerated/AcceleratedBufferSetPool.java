@@ -73,16 +73,16 @@ public class AcceleratedBufferSetPool {
 
 	public class BufferSet {
 
-		public static	final	int											VERTEX_BUFFER_OUT_INDEX	= 1;
-		public static	final	int											SHARING_BUFFER_INDEX	= 2;
-		public static	final	int											MESH_BUFFER_INDEX		= 4;
+		public static	final	int											VERTEX_BUFFER_OUT_INDEX		= 1;
+		public static	final	int											SHARING_BUFFER_INDEX		= 2;
+		public static	final	int											VARYING_BUFFER_OUT_INDEX	= 4;
 
 		private			final	MeshUploaderPool							meshUploaderPool;
 		private			final 	DrawContextPool								drawContextPool;
 		private			final 	ElementBufferPool							elementBufferPool;
 		private			final 	MappedBuffer								sharingBuffer;
-		private			final 	MappedBufferPool							varyingBuffer;
-		private			final 	VertexBufferPool							vertexBuffer;
+		private			final 	StagingBufferPool							varyingBuffer;
+		private			final	StagingBufferPool							vertexBuffer;
 		private			final 	VertexArray									vertexArray;
 		private			final 	Sync										sync;
 		private			final 	MutableInt									sharing;
@@ -97,8 +97,8 @@ public class AcceleratedBufferSetPool {
 			this.drawContextPool	= new DrawContextPool					(size);
 			this.elementBufferPool	= new ElementBufferPool					(size);
 			this.sharingBuffer		= new MappedBuffer						(64L);
-			this.varyingBuffer		= new MappedBufferPool					(size);
-			this.vertexBuffer		= new VertexBufferPool					(size, this);
+			this.varyingBuffer		= new StagingBufferPool					(size, this);
+			this.vertexBuffer		= new StagingBufferPool					(size, this);
 			this.vertexArray		= new VertexArray						();
 			this.sync				= new Sync								();
 			this.sharing			= new MutableInt						(0);
@@ -120,29 +120,28 @@ public class AcceleratedBufferSetPool {
 		}
 
 		public void bindTransformBuffers() {
-			vertexBuffer.getVertexBufferOut()		.bindBase(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_OUT_INDEX);
-			sharingBuffer							.bindBase(GL_SHADER_STORAGE_BUFFER, SHARING_BUFFER_INDEX);
+			vertexBuffer	.getBufferOut()	.bindBase(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_OUT_INDEX);
+			varyingBuffer	.getBufferOut()	.bindBase(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_OUT_INDEX);
+			sharingBuffer					.bindBase(GL_SHADER_STORAGE_BUFFER, SHARING_BUFFER_INDEX);
 		}
 
 		public void bindDrawBuffers() {
 			vertexArray					.bindVertexArray();
-			drawContextPool.getContext().flush			();
 			drawContextPool.getContext().bind			(GL_DRAW_INDIRECT_BUFFER);
 
 			if (		!	bufferEnvironment	.getLayout			()	.equals		(layout)
 					||		elementBufferPool	.getElementBufferOut()	.isResized	()
-					||		vertexBuffer		.getVertexBufferOut	()	.isResized	()) {
+					||		vertexBuffer		.getBufferOut		()	.isResized	()) {
 				layout = bufferEnvironment						.getLayout			();
 				elementBufferPool	.getElementBufferOut()		.bind				(GL_ELEMENT_ARRAY_BUFFER);
 				elementBufferPool	.getElementBufferOut()		.resetResized		();
-				vertexBuffer		.getVertexBufferOut	()		.bind				(GL_ARRAY_BUFFER);
-				vertexBuffer		.getVertexBufferOut	()		.resetResized		();
+				vertexBuffer		.getBufferOut()				.bind				(GL_ARRAY_BUFFER);
+				vertexBuffer		.getBufferOut()				.resetResized		();
 				bufferEnvironment								.setupBufferState	();
 			}
 		}
 
 		public void prepare() {
-			sharingBuffer		.flush	();
 			vertexBuffer		.prepare();
 			elementBufferPool	.prepare();
 		}
@@ -151,11 +150,11 @@ public class AcceleratedBufferSetPool {
 			return meshUploaderPool.get();
 		}
 
-		public VertexBufferPool.VertexBuffer getVertexBuffer() {
+		public StagingBufferPool.StagingBuffer getVertexBuffer() {
 			return vertexBuffer.get();
 		}
 
-		public MappedBufferPool.Pooled getVaryingBuffer() {
+		public StagingBufferPool.StagingBuffer getVaryingBuffer() {
 			return varyingBuffer.get();
 		}
 

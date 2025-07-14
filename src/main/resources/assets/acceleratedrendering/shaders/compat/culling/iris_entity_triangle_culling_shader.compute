@@ -44,7 +44,7 @@ layout(binding=2, std430) readonly  buffer Sharings {
     SharingData sharings[];
 };
 
-layout(binding=3, std430) readonly  buffer Varyings {
+layout(binding=4, std430) readonly  buffer Varyings {
     VaryingData varyings[];
 };
 
@@ -58,6 +58,7 @@ layout(location=0) uniform mat4 viewMatrix;
 layout(location=1) uniform mat4 projectMatrix;
 layout(location=2) uniform uint polygonCount;
 layout(location=3) uniform uint vertexOffset;
+layout(location=4) uniform uint varyingOffset;
 
 void main() {
     uint    index   = gl_GlobalInvocationID.x;
@@ -67,11 +68,12 @@ void main() {
         return;
     }
 
-    uint    index1  = vertexOffset + base + 0u;
-    uint    index2  = vertexOffset + base + 1u;
-    uint    index3  = vertexOffset + base + 2u;
+    uint    index0  = varyingOffset + base + 0u;
+    uint    index1  = vertexOffset  + base + 0u;
+    uint    index2  = vertexOffset  + base + 1u;
+    uint    index3  = vertexOffset  + base + 2u;
 
-    uint    flags   = varyings[index - varyings[index1].offset].flags;
+    uint    flags   = varyings[index0 - varyings[index0].offset].flags;
     uint    noCull  = flags & 0x1u;
 
     Vertex  vertex1 = vertices[index1];
