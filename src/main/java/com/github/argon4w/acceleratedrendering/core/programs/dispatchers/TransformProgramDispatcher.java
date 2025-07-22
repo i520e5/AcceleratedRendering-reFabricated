@@ -79,7 +79,6 @@ public class TransformProgramDispatcher {
 				DISPATCH_COUNT_Y_Z,
 				DISPATCH_COUNT_Y_Z
 		);
-		program.resetProgram();
 	}
 
 	public int getBarrierFlags() {

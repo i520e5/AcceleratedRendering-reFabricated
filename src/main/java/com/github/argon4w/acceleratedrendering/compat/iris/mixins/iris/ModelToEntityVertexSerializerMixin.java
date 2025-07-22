@@ -12,7 +12,7 @@ public class ModelToEntityVertexSerializerMixin {
 			method		= "serialize",
 			constant	= @Constant(longValue = 42L)
 	)
-	public long redirectMidU(long constant) {
+	public long modifyMidU(long constant) {
 		return 44L;
 	}
 
@@ -20,7 +20,7 @@ public class ModelToEntityVertexSerializerMixin {
 			method		= "serialize",
 			constant	= @Constant(longValue = 46L)
 	)
-	public long redirectMidV(long constant) {
+	public long modifyMidV(long constant) {
 		return 48L;
 	}
 
@@ -28,7 +28,7 @@ public class ModelToEntityVertexSerializerMixin {
 			method		= "serialize",
 			constant	= @Constant(longValue = 50L)
 	)
-	public long redirectTangent(long constant) {
+	public long modifyTangent(long constant) {
 		return 52L;
 	}
 }

@@ -117,7 +117,7 @@ void main() {
     // verticesOut[vertexOut].uv1          = verticesIn[reference].uv1;
     verticesOut[vertexOut].uv2          = packSnorm2x16 (uintBitsToFloat(uv2Out));
     verticesOut[vertexOut].normal       = packSnorm4x8  (vec4           (normalize(normalOut), 0.0));
-    verticesOut[vertexOut].iris_entity  = verticesIn[reference].iris_entity;
+    verticesOut[vertexOut].iris_entity  = -1;
 
     varyingsOut[varyingOut].offset      = offset;
     varyingsOut[varyingOut].noCull      = varyingsIn[reference].noCull;

@@ -60,8 +60,8 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 
 	@Override
 	public VertexConsumer getBuffer(RenderType renderType) {
-		var builders		= currentBufferSet	.getBuilders();
-		var builder			= builders			.get		(renderType);
+		var builders	= currentBufferSet	.getBuilders();
+		var builder		= builders			.get		(renderType);
 
 		if (builder != null) {
 			return builder;

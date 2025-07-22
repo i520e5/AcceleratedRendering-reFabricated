@@ -1,10 +1,10 @@
 package com.github.argon4w.acceleratedrendering.compat.iris.mixins.acceleratedrendering;
 
 import com.github.argon4w.acceleratedrendering.compat.iris.interfaces.IIrisAcceleratedBufferBuilder;
-import com.github.argon4w.acceleratedrendering.compat.iris.interfaces.IIrisMeshInfo;
+import com.github.argon4w.acceleratedrendering.compat.iris.interfaces.IIrisMeshInfoCache;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.MeshUploaderPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.IMeshInfoCache;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
 import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,19 +30,14 @@ public class MeshUploadingProgramDispatcherMixin {
 			Collection<AcceleratedBufferBuilder>						builders,
 			AcceleratedBufferSetPool.BufferSet							bufferSet,
 			CallbackInfo												ci,
-			@Local(name = "meshInfo")		MeshUploaderPool.MeshInfo	meshInfo,
+			@Local(name = "meshInfos")		IMeshInfoCache				meshInfos,
 			@Local(name = "builder")		AcceleratedBufferBuilder	builder,
 			@Local(name = "offset")			int							offset,
+			@Local(name = "i")				int							i,
 			@Local(name = "vertexAddress")	long						vertexAddress
 	) {
-		var irisInfo 	= (IIrisMeshInfo)					meshInfo;
-		var irisBuilder	= (IIrisAcceleratedBufferBuilder)	builder;
-
-		irisBuilder.getEntityIdOffset()	.at(offset).putShort(vertexAddress + 0L, irisInfo.getRenderedEntity		());
-		irisBuilder.getEntityIdOffset()	.at(offset).putShort(vertexAddress + 2L, irisInfo.getRenderedBlockEntity	());
-		irisBuilder.getEntityIdOffset()	.at(offset).putShort(vertexAddress + 4L, irisInfo.getRenderedItem		());
-
-		irisBuilder.getEntityOffset()	.at(offset).putShort(vertexAddress + 0L, (short) -1);
-		irisBuilder.getEntityOffset()	.at(offset).putShort(vertexAddress + 2L, (short) -1);
+		((IIrisAcceleratedBufferBuilder) builder).getEntityIdOffset()	.at(offset).putShort(vertexAddress + 0L, ((IIrisMeshInfoCache) meshInfos).getRenderedEntity		(i));
+		((IIrisAcceleratedBufferBuilder) builder).getEntityIdOffset()	.at(offset).putShort(vertexAddress + 2L, ((IIrisMeshInfoCache) meshInfos).getRenderedEntity		(i));
+		((IIrisAcceleratedBufferBuilder) builder).getEntityIdOffset()	.at(offset).putShort(vertexAddress + 4L, ((IIrisMeshInfoCache) meshInfos).getRenderedEntity		(i));
 	}
 }

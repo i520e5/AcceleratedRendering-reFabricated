@@ -21,6 +21,10 @@ public class MappedBuffer extends MutableBuffer implements IClientBuffer {
 
 	@Override
 	public long reserve(long bytes, boolean occupied) {
+		if (bytes <= 0) {
+			return address + position;
+		}
+
 		var oldPosition = this.position;
 		var newPosition = oldPosition + bytes;
 

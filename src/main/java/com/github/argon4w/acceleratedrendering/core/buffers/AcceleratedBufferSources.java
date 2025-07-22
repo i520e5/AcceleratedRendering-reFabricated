@@ -37,7 +37,7 @@ public class AcceleratedBufferSources {
 				&& (	CoreFeature		.shouldForceAccelerateTranslucent	() || canSort || !pRenderType.sortOnUpload)
 				&&		validModes		.contains							(pRenderType.mode)
 				&& !	invalidNames	.contains							(pRenderType.name)
-				&&		sources.containsKey									(pRenderType.format)
+				&&		sources			.containsKey						(pRenderType.format)
 		) {
 			return sources
 					.get		(pRenderType.format)
