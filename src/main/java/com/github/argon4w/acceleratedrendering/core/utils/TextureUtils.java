@@ -1,18 +1,41 @@
 package com.github.argon4w.acceleratedrendering.core.utils;
 
+import com.github.argon4w.acceleratedrendering.AcceleratedRenderingModEntry;
 import com.github.argon4w.acceleratedrendering.core.CoreFeature;
 import com.mojang.blaze3d.platform.NativeImage;
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import org.lwjgl.system.MemoryStack;
 
 import static org.lwjgl.opengl.GL46.*;
 
-public class TextureUtils {
+@EventBusSubscriber(
+		modid	= AcceleratedRenderingModEntry	.MOD_ID,
+		bus		= EventBusSubscriber.Bus		.MOD,
+		value	= Dist							.CLIENT
+)
+public class TextureUtils implements ResourceManagerReloadListener {
 
-	private static final Object2ObjectLinkedOpenHashMap<ResourceLocation, NativeImage> IMAGES = new Object2ObjectLinkedOpenHashMap<>();
+	private	static	final TextureUtils													INSTANCE	= new TextureUtils						();
+	private	static	final Object2ObjectLinkedOpenHashMap<ResourceLocation, NativeImage> IMAGE_CACHE	= new Object2ObjectLinkedOpenHashMap<>	();
+
+	@Override
+	public void onResourceManagerReload(ResourceManager resourceManager) {
+		IMAGE_CACHE.clear();
+	}
+
+	@SubscribeEvent
+	public static void onRegisterClientReloadListener(RegisterClientReloadListenersEvent event) {
+		event.registerReloadListener(INSTANCE);
+	}
 
 	public static NativeImage downloadTexture(RenderType renderType, int mipmapLevel) {
 		var textureResourceLocation = RenderTypeUtils.getTextureLocation(renderType);
@@ -21,7 +44,7 @@ public class TextureUtils {
 			return null;
 		}
 
-		var image = IMAGES.getAndMoveToFirst(textureResourceLocation);
+		var image = IMAGE_CACHE.getAndMoveToFirst(textureResourceLocation);
 
 		if (image != null) {
 			return image;
@@ -65,10 +88,10 @@ public class TextureUtils {
 			);
 
 			nativeImage	.downloadTexture	(mipmapLevel,				false);
-			IMAGES		.putAndMoveToFirst	(textureResourceLocation,	nativeImage);
+			IMAGE_CACHE	.putAndMoveToFirst	(textureResourceLocation,	nativeImage);
 
-			if (IMAGES.size() > CoreFeature.getCachedImageSize()) {
-				IMAGES
+			if (IMAGE_CACHE.size() > CoreFeature.getCachedImageSize()) {
+				IMAGE_CACHE
 						.removeLast	()
 						.close		();
 			}

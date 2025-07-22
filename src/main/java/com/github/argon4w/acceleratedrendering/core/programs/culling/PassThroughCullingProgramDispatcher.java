@@ -9,7 +9,7 @@ import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygo
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.resources.ResourceLocation;
 
-public class PassThroughCullingProgramDispatcher implements IPolygonProgramDispatcher {
+public class PassThroughCullingProgramDispatcher implements ICullingProgramDispatcher {
 
 	public	static	final		PassThroughCullingProgramDispatcher	QUAD				= new PassThroughCullingProgramDispatcher(VertexFormat.Mode.QUADS,		ComputeShaderPrograms.CORE_PASS_THROUGH_QUAD_CULLING_KEY);
 	public	static	final		PassThroughCullingProgramDispatcher	TRIANGLE			= new PassThroughCullingProgramDispatcher(VertexFormat.Mode.TRIANGLES,	ComputeShaderPrograms.CORE_PASS_THROUGH_TRIANGLE_CULLING_KEY);
@@ -30,11 +30,11 @@ public class PassThroughCullingProgramDispatcher implements IPolygonProgramDispa
 
 	@Override
 	public int dispatch(AcceleratedBufferBuilder builder) {
-		var vertexCount		= builder.getTotalVertexCount	();
+		var vertexCount		= builder			.getTotalVertexCount();
 		var polygonCount	= vertexCount / mode.primitiveLength;
 
 		polygonCountUniform.uploadUnsignedInt(polygonCount);
-		vertexOffsetUniform.uploadUnsignedInt((int) builder.getVertexBuffer().getOffset());
+		vertexOffsetUniform.uploadUnsignedInt((int) (builder.getVertexBuffer().getOffset() / builder.getVertexSize()));
 
 		program.useProgram	();
 		program.dispatch	(
@@ -45,5 +45,10 @@ public class PassThroughCullingProgramDispatcher implements IPolygonProgramDispa
 		program.resetProgram();
 
 		return program.getBarrierFlags();
+	}
+
+	@Override
+	public boolean shouldCull() {
+		return false;
 	}
 }

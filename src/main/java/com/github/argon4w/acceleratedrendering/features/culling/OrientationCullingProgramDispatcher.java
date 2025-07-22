@@ -4,12 +4,13 @@ import com.github.argon4w.acceleratedrendering.core.backends.programs.ComputePro
 import com.github.argon4w.acceleratedrendering.core.backends.programs.Uniform;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
+import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.resources.ResourceLocation;
 
-public class OrientationCullingProgramDispatcher implements IPolygonProgramDispatcher {
+public class OrientationCullingProgramDispatcher implements ICullingProgramDispatcher {
 
 	private static  final int				GROUP_SIZE 			= 128;
 	private static	final int				DISPATCH_COUNT_Y_Z	= 1;
@@ -34,14 +35,14 @@ public class OrientationCullingProgramDispatcher implements IPolygonProgramDispa
 
 	@Override
 	public int dispatch(AcceleratedBufferBuilder builder) {
-		var vertexCount		= builder.getTotalVertexCount	();
+		var vertexCount		= builder			.getTotalVertexCount();
 		var polygonCount	= vertexCount / mode.primitiveLength;
 
 		viewMatrixUniform	.uploadMatrix4f		(RenderSystem	.getModelViewMatrix	());
 		projectMatrixUniform.uploadMatrix4f		(RenderSystem	.getProjectionMatrix());
 		polygonCountUniform	.uploadUnsignedInt	(polygonCount);
-		vertexOffsetUniform	.uploadUnsignedInt	((int) builder	.getVertexBuffer	().getOffset());
-		varyingOffsetUniform.uploadUnsignedInt	((int) builder	.getVaryingBuffer	().getOffset());
+		vertexOffsetUniform	.uploadUnsignedInt	((int) (builder	.getVertexBuffer	().getOffset() / builder					.getVertexSize()));
+		varyingOffsetUniform.uploadUnsignedInt	((int) (builder	.getVaryingBuffer	().getOffset() / AcceleratedBufferBuilder	.VARYING_SIZE));
 
 		program.useProgram	();
 		program.dispatch	(
@@ -52,5 +53,10 @@ public class OrientationCullingProgramDispatcher implements IPolygonProgramDispa
 		program.resetProgram();
 
 		return program.getBarrierFlags();
+	}
+
+	@Override
+	public boolean shouldCull() {
+		return OrientationCullingFeature.shouldCull();
 	}
 }

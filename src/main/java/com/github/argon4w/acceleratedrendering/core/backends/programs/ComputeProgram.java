@@ -27,8 +27,11 @@ public class ComputeProgram {
 		);
 	}
 
-	public boolean linkProgram() {
+	public void linkProgram() {
 		glLinkProgram(programHandle);
+	}
+
+	public boolean isLinked() {
 		return glGetProgrami(programHandle, GL_LINK_STATUS) == GL_TRUE;
 	}
 
@@ -46,6 +49,10 @@ public class ComputeProgram {
 
 	public void waitBarriers() {
 		glMemoryBarrier(barrierFlags);
+	}
+
+	public void waitBarriers(int additional) {
+		glMemoryBarrier(barrierFlags | additional);
 	}
 
 	public int getUniformLocation(String name) {

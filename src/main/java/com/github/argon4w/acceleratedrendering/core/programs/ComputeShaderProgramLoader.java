@@ -71,15 +71,17 @@ public class ComputeShaderProgramLoader extends SimplePreparableReloadListener<M
 					var program			= new ComputeProgram(barrierFlags);
 					var computeShader	= new ComputeShader	();
 
-					computeShader.setShaderSource(shaderSource);
+					computeShader.setShaderSource	(shaderSource);
+					computeShader.compileShader		();
 
-					if (!computeShader.compileShader()) {
+					if (!computeShader.isCompiled()) {
 						throw new IllegalStateException("Shader \"" + key + "\" failed to compile because of the following errors: " + computeShader.getInfoLog());
 					}
 
 					program.attachShader(computeShader);
+					program.linkProgram	();
 
-					if (!program.linkProgram()) {
+					if (!program.isLinked()) {
 						throw new IllegalStateException("Program \"" + key + "\" failed to link because of the following errors: " + program.getInfoLog());
 					}
 

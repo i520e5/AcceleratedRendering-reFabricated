@@ -3,6 +3,7 @@ package com.github.argon4w.acceleratedrendering.core.programs.dispatchers;
 import com.github.argon4w.acceleratedrendering.core.backends.programs.ComputeProgram;
 import com.github.argon4w.acceleratedrendering.core.backends.programs.Uniform;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.StagingBufferPool;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
 import net.minecraft.resources.ResourceLocation;
 
@@ -43,8 +44,8 @@ public class TransformProgramDispatcher {
 				varyingBuffer		.bindBase			(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_INDEX);
 
 				vertexCountUniform	.uploadUnsignedInt	(vertexCount);
-				vertexOffsetUniform	.uploadUnsignedInt	((int) vertexBuffer	.getOffset());
-				varyingOffsetUniform.uploadUnsignedInt	((int) varyingBuffer.getOffset());
+				vertexOffsetUniform	.uploadUnsignedInt	((int) (vertexBuffer	.getOffset() / builder					.getVertexSize()));
+				varyingOffsetUniform.uploadUnsignedInt	((int) (varyingBuffer	.getOffset() / AcceleratedBufferBuilder	.VARYING_SIZE));
 
 				program.dispatch(
 						(vertexCount + GROUP_SIZE - 1) / GROUP_SIZE,
@@ -56,5 +57,32 @@ public class TransformProgramDispatcher {
 
 		program.resetProgram();
 		program.waitBarriers();
+	}
+
+	public void dispatch(
+			StagingBufferPool.StagingBuffer	vertexBuffer,
+			StagingBufferPool.StagingBuffer	varyingBuffer,
+			long							vertexCount,
+			long							vertexOffset,
+			long							varyingOffset
+	) {
+		vertexBuffer		.bindBase			(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_IN_INDEX);
+		varyingBuffer		.bindBase			(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_INDEX);
+
+		vertexCountUniform	.uploadUnsignedInt	((int) vertexCount);
+		vertexOffsetUniform	.uploadUnsignedInt	((int) vertexOffset);
+		varyingOffsetUniform.uploadUnsignedInt	((int) varyingOffset);
+
+		program.useProgram	();
+		program.dispatch	(
+				(int) (vertexCount + GROUP_SIZE - 1) / GROUP_SIZE,
+				DISPATCH_COUNT_Y_Z,
+				DISPATCH_COUNT_Y_Z
+		);
+		program.resetProgram();
+	}
+
+	public int getBarrierFlags() {
+		return program.getBarrierFlags();
 	}
 }

@@ -15,7 +15,8 @@ struct Vertex {
 struct VaryingData {
     int     offset;
     int     sharing;
-    int     flags;
+    int     mesh;
+    int     noCull;
 };
 
 struct SharingData {
@@ -68,9 +69,7 @@ void main() {
     uint    index2  = vertexOffset  + base + 1u;
     uint    index3  = vertexOffset  + base + 2u;
     uint    index4  = vertexOffset  + base + 3u;
-
-    uint    flags   = varyings[index0 - varyings[index0].offset].flags;
-    uint    noCull  = flags & 0x1u;
+    uint    noCull  = varyings[index0 - varyings[index0].offset].noCull;
 
     Vertex  vertex1 = vertices[index1];
     Vertex  vertex2 = vertices[index2];

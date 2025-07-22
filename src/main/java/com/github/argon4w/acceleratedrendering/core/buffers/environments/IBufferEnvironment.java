@@ -2,10 +2,10 @@ package com.github.argon4w.acceleratedrendering.core.buffers.environments;
 
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderPrograms;
+import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.TransformProgramDispatcher;
-import com.github.argon4w.acceleratedrendering.core.programs.extras.IExtraVertexData;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
@@ -18,11 +18,10 @@ public interface IBufferEnvironment {
 	void								setupBufferState					();
 	boolean								isAccelerated						(VertexFormat		vertexFormat);
 	Set<VertexFormat>					getVertexFormats					();
-	IExtraVertexData					getExtraVertex						(VertexFormat.Mode	mode);
 	IMemoryLayout<VertexFormatElement>	getLayout							();
 	MeshUploadingProgramDispatcher		selectMeshUploadingProgramDispatcher();
 	TransformProgramDispatcher			selectTransformProgramDispatcher	();
-	IPolygonProgramDispatcher			selectCullProgramDispatcher			(RenderType			renderType);
+	ICullingProgramDispatcher			selectCullProgramDispatcher			(RenderType			renderType);
 	IPolygonProgramDispatcher			selectProcessingProgramDispatcher	(VertexFormat.Mode	mode);
 	int									getVertexSize						();
 

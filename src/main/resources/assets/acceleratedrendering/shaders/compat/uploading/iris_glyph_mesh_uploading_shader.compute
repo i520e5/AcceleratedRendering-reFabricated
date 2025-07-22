@@ -19,7 +19,8 @@ struct Vertex {
 struct VaryingData {
     int     offset;
     int     sharing;
-    int     flags;
+    int     mesh;
+    int     noCull;
 };
 
 struct SharingData {
@@ -29,9 +30,15 @@ struct SharingData {
 
 struct MeshInfo {
     int     sharing;
+    int     noCull;
     uint    color;
     uint    uv1;
     uint    uv2;
+};
+
+struct IrisInfo {
+    uint    iris_entity_0;
+    uint    iris_entity_1;
 };
 
 layout(local_size_x = 128) in;
@@ -56,18 +63,15 @@ layout(binding=8,   std430) readonly    buffer MeshInfos {
     MeshInfo    meshInfos[];
 };
 
-layout(binding=9,   std430) readonly    buffer ExtraVertices {
-    Vertex      extraVertices[];
-};
-
-layout(binding=10,  std430) readonly    buffer ExtraVaryings {
-    VaryingData extraVaryings[];
+layout(binding=9,   std430) readonly    buffer IrisInfos {
+    IrisInfo    irisInfos[];
 };
 
 layout(location=0) uniform uint meshCount;
 layout(location=1) uniform uint meshSize;
 layout(location=2) uniform uint vertexOffset;
 layout(location=3) uniform uint varyingOffset;
+layout(location=4) uniform uint meshOffset;
 
 void main() {
     uint        indexIn         = gl_GlobalInvocationID.x;
@@ -78,10 +82,9 @@ void main() {
         return;
     }
 
-    Vertex      vertex          = meshVertices  [index];
+    Vertex      vertex          = meshVertices  [meshOffset + index];
     MeshInfo    meshInfo        = meshInfos     [meshIndex];
-    Vertex      extraVertex     = extraVertices [meshIndex];
-    VaryingData extraVarying    = extraVaryings [meshIndex];
+    IrisInfo    irisInfo        = irisInfos     [meshIndex];
     SharingData sharingData     = sharings      [meshInfo.sharing];
     uint        vertexIndex     = index + meshIndex * meshSize + vertexOffset;
     uint        varyingIndex    = index + meshIndex * meshSize + varyingOffset;
@@ -94,12 +97,12 @@ void main() {
     vec4        colorOut        = colorIn * colorMesh;
     uvec2       uv2Out          = max(uv2In, uv2Mesh);
 
-    vec4        pos             = sharingData.transform * vec4          (vertex.x, vertex.y, vertex.z, 1.0);
-    // vec3        normal          = sharingData.normal    * unpackSnorm4x8(vertex.normal).xyz;
+    vec4        posOut          = sharingData.transform * vec4          (vertex.x, vertex.y, vertex.z, 1.0);
+    // vec3        normalOut       = sharingData.normal    * unpackSnorm4x8(vertex.normal).xyz;
 
-    vertices[vertexIndex].x             = pos.x;
-    vertices[vertexIndex].y             = pos.y;
-    vertices[vertexIndex].z             = pos.z;
+    vertices[vertexIndex].x             = posOut.x;
+    vertices[vertexIndex].y             = posOut.y;
+    vertices[vertexIndex].z             = posOut.z;
 
     vertices[vertexIndex].color         = packUnorm4x8(colorOut);
 
@@ -108,12 +111,12 @@ void main() {
 
     // vertices[vertexIndex].uv1           = meshInfo.uv1;
     vertices[vertexIndex].uv2           = packSnorm2x16 (uintBitsToFloat(uv2Out));
-    // vertices[vertexIndex].normal        = packSnorm4x8  (vec4           (normalize(normal), 0.0));
+    // vertices[vertexIndex].normal        = packSnorm4x8  (vec4           (normalize(normalOut), 0.0));
 
-    vertices[vertexIndex].iris_entity_0 = vertex.iris_entity_0;
-    vertices[vertexIndex].iris_entity_1 = vertex.iris_entity_1;
+    vertices[vertexIndex].iris_entity_0 = irisInfo.iris_entity_0;
+    vertices[vertexIndex].iris_entity_1 = irisInfo.iris_entity_1;
 
     varyings[varyingIndex].offset       = 0;
-    varyings[varyingIndex].sharing      = meshInfo      .sharing;
-    varyings[varyingIndex].flags        = extraVarying  .flags;
+    varyings[varyingIndex].sharing      = meshInfo.sharing;
+    varyings[varyingIndex].noCull       = meshInfo.noCull;
 }

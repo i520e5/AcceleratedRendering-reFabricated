@@ -26,8 +26,11 @@ public class Sync {
 		syncHandle = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
 	}
 
-	public void resetSync() {
+	public void deleteSync() {
 		glDeleteSync(syncHandle);
+	}
+
+	public void resetSync() {
 		syncHandle = -1;
 	}
 }

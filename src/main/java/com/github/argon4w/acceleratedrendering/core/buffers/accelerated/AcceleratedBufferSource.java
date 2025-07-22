@@ -20,9 +20,9 @@ import static org.lwjgl.opengl.GL46.*;
 public class AcceleratedBufferSource extends MultiBufferSource.BufferSource implements IAcceleratedBufferSource {
 
 	private final	IBufferEnvironment										bufferEnvironment;
+	private final	Map<RenderType, DrawContextPool.IndirectDrawContext>	drawContexts;
 	private final	AcceleratedBufferSetPool								acceleratedBufferSetPool;
 	private final	Set<AcceleratedBufferSetPool.BufferSet>					bufferSets;
-	private final	Map<RenderType, DrawContextPool.IndirectDrawContext>	drawContexts;
 
 	private			AcceleratedBufferSetPool.BufferSet						currentBufferSet;
 	private 		boolean													used;
@@ -31,10 +31,10 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 		super(null, null);
 
 		this.bufferEnvironment			= bufferEnvironment;
-		this.acceleratedBufferSetPool	= new AcceleratedBufferSetPool					(this.bufferEnvironment);
-		this.currentBufferSet			= this.acceleratedBufferSetPool	.getBufferSet	(false);
-		this.bufferSets					= ObjectLinkedOpenHashSet		.of				(this.currentBufferSet);
-		this.drawContexts				= new Object2ObjectLinkedOpenHashMap<>			();
+		this.drawContexts				= new Object2ObjectLinkedOpenHashMap<>	();
+		this.acceleratedBufferSetPool	= new AcceleratedBufferSetPool			(this.bufferEnvironment);
+		this.currentBufferSet			= this.acceleratedBufferSetPool	.get	(false);
+		this.bufferSets					= ObjectLinkedOpenHashSet		.of		(this.currentBufferSet);
 		this.used						= false;
 	}
 
@@ -67,12 +67,12 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 			return builder;
 		}
 
-		var vertexBuffer	= currentBufferSet	.getVertexBuffer	();
-		var varyingBuffer	= currentBufferSet	.getVaryingBuffer	();
-		var elementSegment	= currentBufferSet	.getElementSegment	();
+		var vertexBuffer	= currentBufferSet.getVertexBuffer	();
+		var varyingBuffer	= currentBufferSet.getVaryingBuffer	();
+		var elementSegment	= currentBufferSet.getElementSegment();
 
 		if (vertexBuffer == null) {
-			currentBufferSet	= acceleratedBufferSetPool	.getBufferSet		(true);
+			currentBufferSet	= acceleratedBufferSetPool	.get				(true);
 			builders			= currentBufferSet			.getBuilders		();
 			vertexBuffer		= currentBufferSet			.getVertexBuffer	();
 			varyingBuffer		= currentBufferSet			.getVaryingBuffer	();
@@ -102,18 +102,16 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 		}
 
 		for (var bufferSet : bufferSets) {
-			var builders		= bufferSet.getBuilders	();
-			var program			= glGetInteger			(GL_CURRENT_PROGRAM);
-			var barrier			= 0;
+			var builders	= bufferSet.getBuilders	();
+			var program		= glGetInteger			(GL_CURRENT_PROGRAM);
+			var barrier		= 0;
 
 			if (builders.isEmpty()) {
 				continue;
 			}
 
-			bufferSet													.prepare				();
-			bufferSet													.bindTransformBuffers	();
-			bufferEnvironment.selectMeshUploadingProgramDispatcher	()	.dispatch				(builders.values());
-			bufferEnvironment.selectTransformProgramDispatcher		()	.dispatch				(builders.values());
+			bufferEnvironment.selectMeshUploadingProgramDispatcher	().dispatch(builders.values(), bufferSet);
+			bufferEnvironment.selectTransformProgramDispatcher		().dispatch(builders.values());
 
 			for (var renderType : builders.keySet()) {
 				var builder			= builders	.get				(renderType);
@@ -126,11 +124,13 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 				var mode		= renderType.mode;
 				var drawContext	= bufferSet	.getDrawContext();
 
-				drawContext	.bindComputeBuffers	(bufferSet.getElementBuffer(),	elementSegment);
-				drawContexts.put				(renderType,					drawContext);
+				elementSegment	.allocateOffset		();
+				bufferSet		.bindElementBuffer	(elementSegment);
+				drawContext		.bindComputeBuffers	(elementSegment);
+				drawContexts	.put				(renderType, drawContext);
 
-				barrier |= bufferEnvironment.selectProcessingProgramDispatcher	(mode)		.dispatch(builder);
-				barrier |= bufferEnvironment.selectCullProgramDispatcher		(renderType).dispatch(builder);
+				barrier |= bufferEnvironment.selectProcessingProgramDispatcher	(mode)	.dispatch(builder);
+				barrier |= builder			.getCullingProgramDispatcher		()		.dispatch(builder);
 			}
 
 			glMemoryBarrier					(barrier);
@@ -139,10 +139,10 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 			bufferSet		.bindDrawBuffers();
 
 			for (var renderType : drawContexts.keySet()) {
-				renderType.setupRenderState();
+				renderType						.setupRenderState	();
 
-				var drawContext	= drawContexts	.get		(renderType);
-				var shader		= RenderSystem	.getShader	();
+				var drawContext	= drawContexts	.get				(renderType);
+				var shader		= RenderSystem	.getShader			();
 				var mode		= renderType	.mode;
 
 				shader.setDefaultUniforms(
@@ -158,15 +158,14 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 				renderType	.clearRenderState	();
 			}
 
-			glMemoryBarrier						(GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
-			bufferSet		.reset				();
-			bufferSet		.setInFlight		();
-			drawContexts	.clear				();
+			glMemoryBarrier				(GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
+			bufferSet		.reset		();
+			bufferSet		.setInFlight();
+			drawContexts	.clear		();
 		}
 
-		currentBufferSet	= acceleratedBufferSetPool	.getBufferSet	(false);
 		used				= false;
-
-		bufferSets										.add			(currentBufferSet);
+		currentBufferSet	= acceleratedBufferSetPool	.get(false);
+		bufferSets										.add(currentBufferSet);
 	}
 }

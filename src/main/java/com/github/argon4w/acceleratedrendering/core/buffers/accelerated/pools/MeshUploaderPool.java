@@ -1,29 +1,29 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools;
 
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffer;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryInterface;
-import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.SimpleMemoryInterface;
 import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
+import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.core.utils.SimpleCachedArray;
 import com.github.argon4w.acceleratedrendering.core.utils.SimpleResetPool;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.util.FastColor;
+
+import java.util.function.IntFunction;
 
 import static org.lwjgl.opengl.GL43.GL_SHADER_STORAGE_BUFFER;
 
-public class MeshUploaderPool extends SimpleResetPool<MeshUploaderPool.MeshUploader, AcceleratedBufferSetPool.BufferSet> {
+public class MeshUploaderPool extends SimpleResetPool<MeshUploaderPool.MeshUploader, Void> {
 
-	public MeshUploaderPool(AcceleratedBufferSetPool.BufferSet bufferSet) {
-		super(128, bufferSet);
+	public MeshUploaderPool() {
+		super(128, null);
 	}
 
 	@Override
-	protected MeshUploader create(AcceleratedBufferSetPool.BufferSet context, int i) {
-		return new MeshUploader(context);
+	protected MeshUploader create(Void context, int i) {
+		return new MeshUploader();
 	}
 
 	@Override
@@ -42,99 +42,121 @@ public class MeshUploaderPool extends SimpleResetPool<MeshUploaderPool.MeshUploa
 		return get();
 	}
 
-	public static class MeshUploader {
+	@Getter
+	public static class MeshInfo implements SimpleCachedArray.Element {
 
-		public static	final	int									MESH_BUFFER_INDEX			= 7;
-		public static	final	int									MESH_INFO_BUFFER_INDEX		= 8;
-		public static	final	int									EXTRA_VERTEX_BUFFER_INDEX	= 9;
-		public static	final	int									EXTRA_VARYING_BUFFER_INDEX	= 10;
+		private int color;
+		private int light;
+		private int overlay;
+		private int sharing;
+		private int shouldCull;
 
-		public static	final	long								MESH_INFO_SIZE		= 4L * 4L;
-		public static	final	IMemoryInterface					MESH_INFO_SHARING	= new SimpleMemoryInterface(0L * 4L, MESH_INFO_SIZE);
-		public static	final	IMemoryInterface					MESH_INFO_COLOR		= new SimpleMemoryInterface(1L * 4L, MESH_INFO_SIZE);
-		public static	final	IMemoryInterface					MESH_INFO_UV1		= new SimpleMemoryInterface(2L * 4L, MESH_INFO_SIZE);
-		public static	final	IMemoryInterface					MESH_INFO_UV2		= new SimpleMemoryInterface(3L * 4L, MESH_INFO_SIZE);
-
-		private			final	AcceleratedBufferSetPool.BufferSet	bufferSet;
-		private			final	MappedBuffer 						meshInfoBuffer;
-		private			final	MappedBuffer 						extraVertexBuffer;
-		private			final	MappedBuffer 						extraVaryingBuffer;
-
-		private					IMemoryLayout<VertexFormatElement>	layout;
-		private					VertexFormat.Mode					mode;
-		@Getter	private			ServerMesh							serverMesh;
-		@Getter	private			long								meshCount;
-
-		public MeshUploader(AcceleratedBufferSetPool.BufferSet bufferSet) {
-			this.bufferSet			= bufferSet;
-			this.meshInfoBuffer		= new MappedBuffer(64L);
-			this.extraVertexBuffer	= new MappedBuffer(64L);
-			this.extraVaryingBuffer	= new MappedBuffer(64L);
-
-			this.layout				= null;
-			this.mode				= null;
-			this.serverMesh			= null;
-			this.meshCount			= 0L;
+		public MeshInfo() {
+			this.color		= -1;
+			this.light		= -1;
+			this.overlay	= -1;
+			this.sharing	= -1;
 		}
 
-		public void set(
-				IMemoryLayout<VertexFormatElement>	layout,
-				VertexFormat.Mode					mode,
-				ServerMesh							serverMesh
-		) {
-			this.layout		= layout;
-			this.mode		= mode;
-			this.serverMesh	= serverMesh;
-		}
-
-		public void addUpload(
+		public void setupMeshInfo(
 				int color,
 				int light,
 				int overlay,
-				int sharing
+				int sharing,
+				int shouldCull
 		) {
-			var meshInfoAddress		= meshInfoBuffer	.reserve		(MESH_INFO_SIZE);
-			var extraVertexAddress	= extraVertexBuffer	.reserve		(layout.getSize());
-			var extraVaryingAddress	= extraVaryingBuffer.reserve		(AcceleratedBufferBuilder.VARYING_SIZE);
-			var data				= bufferSet			.getExtraVertex	(mode);
+			this.color		= color;
+			this.light		= light;
+			this.overlay	= overlay;
+			this.sharing	= sharing;
+			this.shouldCull	= shouldCull;
+		}
 
-			data			.addExtraVertex	(extraVertexAddress);
-			data			.addExtraVarying(extraVaryingAddress);
+		@Override
+		public void reset() {
 
-			MESH_INFO_SHARING	.putInt(meshInfoAddress, sharing);
-			MESH_INFO_COLOR		.putInt(meshInfoAddress, FastColor.ABGR32.fromArgb32(color));
-			MESH_INFO_UV1		.putInt(meshInfoAddress, overlay);
-			MESH_INFO_UV2		.putInt(meshInfoAddress, light);
+		}
 
-			meshCount	++;
+		@Override
+		public void delete() {
+
+		}
+	}
+
+	public static class MeshUploader implements IntFunction<MeshInfo> {
+
+		public static	final	int							MESH_INFO_BUFFER_INDEX		= 8;
+		public static	final	long						MESH_INFO_SIZE				= 5L * 4L;
+
+		public static	final	IMemoryInterface			MESH_INFO_SHARING			= new SimpleMemoryInterface(0L * 4L, MESH_INFO_SIZE);
+		public static	final	IMemoryInterface			MESH_INFO_SHOULD_CULL		= new SimpleMemoryInterface(1L * 4L, MESH_INFO_SIZE);
+		public static	final	IMemoryInterface			MESH_INFO_COLOR				= new SimpleMemoryInterface(2L * 4L, MESH_INFO_SIZE);
+		public static	final	IMemoryInterface			MESH_INFO_UV1				= new SimpleMemoryInterface(3L * 4L, MESH_INFO_SIZE);
+		public static	final	IMemoryInterface			MESH_INFO_UV2				= new SimpleMemoryInterface(4L * 4L, MESH_INFO_SIZE);
+
+		private			final	MappedBuffer 				meshInfoBuffer;
+		@Getter private	final	SimpleCachedArray<MeshInfo>	meshInfos;
+
+		@Getter	private			long						meshCount;
+		@Getter	@Setter private	ServerMesh					serverMesh;
+
+		public MeshUploader() {
+			this.meshInfoBuffer				= new MappedBuffer			(64L);
+			this.meshInfos					= new SimpleCachedArray<>	(128, this);
+
+			this.serverMesh					= null;
+			this.meshCount					= 0L;
+		}
+
+		public void addUpload(
+				int					color,
+				int					light,
+				int					overlay,
+				int					sharing,
+				int					shouldCull
+		) {
+			meshCount ++;
+			meshInfos
+					.get			()
+					.setupMeshInfo	(
+							color,
+							light,
+							overlay,
+							sharing,
+							shouldCull
+					);
 		}
 
 		public void bindUploadBuffers() {
-			serverMesh.meshBuffer()	.bindBase(GL_SHADER_STORAGE_BUFFER, MESH_BUFFER_INDEX);
-			meshInfoBuffer			.bindBase(GL_SHADER_STORAGE_BUFFER, MESH_INFO_BUFFER_INDEX);
-			extraVertexBuffer		.bindBase(GL_SHADER_STORAGE_BUFFER, EXTRA_VERTEX_BUFFER_INDEX);
-			extraVaryingBuffer		.bindBase(GL_SHADER_STORAGE_BUFFER, EXTRA_VARYING_BUFFER_INDEX);
+			var meshInfoAddress	= meshInfoBuffer.reserve	(MESH_INFO_SIZE * meshCount);
+			meshInfoBuffer						.bindBase	(GL_SHADER_STORAGE_BUFFER, MESH_INFO_BUFFER_INDEX);
+
+			for (var i = 0; i < meshCount; i ++) {
+				var meshInfo = meshInfos.at(i);
+
+				MESH_INFO_SHARING		.at(i).putInt(meshInfoAddress, meshInfo			.sharing);
+				MESH_INFO_SHOULD_CULL	.at(i).putInt(meshInfoAddress, meshInfo			.shouldCull);
+				MESH_INFO_COLOR			.at(i).putInt(meshInfoAddress, FastColor.ABGR32	.fromArgb32(meshInfo.color));
+				MESH_INFO_UV1			.at(i).putInt(meshInfoAddress, meshInfo			.overlay);
+				MESH_INFO_UV2			.at(i).putInt(meshInfoAddress, meshInfo			.light);
+			}
 		}
 
 		public void reset() {
-			meshInfoBuffer		.reset();
-			extraVertexBuffer	.reset();
-			extraVaryingBuffer	.reset();
+			meshInfos		.reset();
+			meshInfoBuffer	.reset();
 
-			layout		= null;
-			mode		= null;
-			serverMesh	= null;
-			meshCount	= 0;
+			meshCount	= 0L;
 		}
 
 		public void delete() {
-			meshInfoBuffer		.delete();
-			extraVertexBuffer	.delete();
-			extraVaryingBuffer	.delete();
+			meshInfos		.delete();
+			meshInfoBuffer	.delete();
 		}
 
-		public long getUploadSize() {
-			return meshCount * serverMesh.size();
+		@Override
+		public MeshInfo apply(int value) {
+			return new MeshInfo();
 		}
 	}
 }

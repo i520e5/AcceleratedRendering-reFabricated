@@ -1,17 +1,20 @@
 package com.github.argon4w.acceleratedrendering.compat.iris.programs.culling;
 
+import com.github.argon4w.acceleratedrendering.compat.iris.IrisCompatFeature;
 import com.github.argon4w.acceleratedrendering.core.backends.programs.ComputeProgram;
 import com.github.argon4w.acceleratedrendering.core.backends.programs.Uniform;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
+import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.features.culling.OrientationCullingFeature;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.shadows.ShadowRenderer;
 import net.irisshaders.iris.shadows.ShadowRenderingState;
 import net.minecraft.resources.ResourceLocation;
 
-public class IrisCullingProgramDispatcher implements IPolygonProgramDispatcher {
+public class IrisCullingProgramDispatcher implements ICullingProgramDispatcher {
 
 	private static	final int				GROUP_SIZE 			= 128;
 	private static	final int				DISPATCH_COUNT_Y_Z	= 1;
@@ -36,16 +39,16 @@ public class IrisCullingProgramDispatcher implements IPolygonProgramDispatcher {
 
 	@Override
 	public int dispatch(AcceleratedBufferBuilder builder) {
-		var vertexCount		= builder				.getTotalVertexCount				();
-		var polygonCount	= vertexCount / mode.primitiveLength;
 		var shadowState		= ShadowRenderingState	.areShadowsCurrentlyBeingRendered	();
+		var vertexCount		= builder				.getTotalVertexCount				();
+		var polygonCount	= vertexCount / mode	.primitiveLength;
 
 		viewMatrixUniform	.uploadMatrix4f		(shadowState ? ShadowRenderer.MODELVIEW		: RenderSystem.getModelViewMatrix	());
 		projectMatrixUniform.uploadMatrix4f		(shadowState ? ShadowRenderer.PROJECTION	: RenderSystem.getProjectionMatrix	());
 
 		polygonCountUniform	.uploadUnsignedInt	(polygonCount);
-		vertexOffsetUniform	.uploadUnsignedInt	((int) builder.getVertexBuffer()	.getOffset());
-		varyingOffsetUniform.uploadUnsignedInt	((int) builder.getVaryingBuffer()	.getOffset());
+		vertexOffsetUniform	.uploadUnsignedInt	((int) (builder.getVertexBuffer()	.getOffset() / builder					.getVertexSize()));
+		varyingOffsetUniform.uploadUnsignedInt	((int) (builder.getVaryingBuffer()	.getOffset() / AcceleratedBufferBuilder	.VARYING_SIZE));
 
 		program.useProgram	();
 		program.dispatch	(
@@ -56,5 +59,11 @@ public class IrisCullingProgramDispatcher implements IPolygonProgramDispatcher {
 		program.resetProgram();
 
 		return program.getBarrierFlags();
+	}
+
+	@Override
+	public boolean shouldCull() {
+		return 			OrientationCullingFeature.shouldCull()
+				&& (	IrisCompatFeature.isShadowCullingEnabled() || !ShadowRenderingState.areShadowsCurrentlyBeingRendered());
 	}
 }

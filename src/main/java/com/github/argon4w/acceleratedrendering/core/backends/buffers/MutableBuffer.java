@@ -35,6 +35,10 @@ public class MutableBuffer extends MutableSize implements IServerBuffer {
 		glBuffer.unmap();
 	}
 
+	public void copyTo(IServerBuffer buffer) {
+		glBuffer.copyTo(buffer, size);
+	}
+
 	@Override
 	public int getBufferHandle() {
 		return glBuffer.getBufferHandle();

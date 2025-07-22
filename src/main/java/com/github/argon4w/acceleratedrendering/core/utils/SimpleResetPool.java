@@ -6,11 +6,11 @@ import java.util.Arrays;
 
 public abstract class SimpleResetPool<T, C> {
 
-	@Getter protected final	C			context;
+	@Getter protected	final	C			context;
 
-	private					int			cursor;
-	protected 				int			size;
-	protected				Object[]	pool;
+	@Getter protected			Object[]	pool;
+	@Getter protected			int			cursor;
+	protected 					int			size;
 
 	public SimpleResetPool(int size, C context) {
 		this.size		= size;
@@ -29,16 +29,17 @@ public abstract class SimpleResetPool<T, C> {
 	protected abstract void	delete	(T t);
 
 	@SuppressWarnings("unchecked")
-	public T get() {
+	public T get(boolean force) {
 		if (cursor < size) {
 			var t = (T) pool[cursor ++];
 
 			if (test(t)) {
+				init(t);
 				return t;
 			}
 		}
 
-		return fail();
+		return fail(force);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -68,11 +69,28 @@ public abstract class SimpleResetPool<T, C> {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
+	public T at(int index) {
+		return (T) pool[index];
+	}
+
+	public T get() {
+		return get(false);
+	}
+
+	public void init(T t) {
+
+	}
+
+	protected T fail(boolean force) {
+		return fail();
+	}
+
 	public T fail() {
 		return null;
 	}
 
-	public boolean test(T t) {
+	protected boolean test(T t) {
 		return true;
 	}
 }

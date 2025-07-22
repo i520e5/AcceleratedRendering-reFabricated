@@ -138,26 +138,14 @@ public class IrisPrograms {
 	public static void onLoadCullingPrograms(LoadCullingProgramSelectorEvent event) {
 		event.loadFor(IrisVertexFormats.TERRAIN, parent -> new IrisCullingProgramSelector(
 				parent,
-				VertexFormat.Mode.TRIANGLES,
+				IRIS_BLOCK_QUAD_CULLING_KEY,
 				IRIS_BLOCK_TRIANGLE_CULLING_KEY
 		));
 
-		event.loadFor(IrisVertexFormats.TERRAIN, parent -> new IrisCullingProgramSelector(
-				parent,
-				VertexFormat.Mode.QUADS,
-				IRIS_BLOCK_QUAD_CULLING_KEY
-		));
-
 		event.loadFor(IrisVertexFormats.ENTITY, parent -> new IrisCullingProgramSelector(
 				parent,
-				VertexFormat.Mode.TRIANGLES,
+				IRIS_ENTITY_QUAD_CULLING_KEY,
 				IRIS_ENTITY_TRIANGLE_CULLING_KEY
-		));
-
-		event.loadFor(IrisVertexFormats.ENTITY, parent -> new IrisCullingProgramSelector(
-				parent,
-				VertexFormat.Mode.QUADS,
-				IRIS_ENTITY_QUAD_CULLING_KEY
 		));
 	}
 
@@ -165,43 +153,19 @@ public class IrisPrograms {
 	public static void onLoadPolygonProcessors(LoadPolygonProcessorEvent event) {
 		event.loadFor(IrisVertexFormats.TERRAIN, parent -> new IrisPolygonProcessor(
 				parent,
-				IrisVertexFormats.TERRAIN,
-				VertexFormat.Mode.TRIANGLES,
+				IRIS_BLOCK_QUAD_PROCESSING_KEY,
 				IRIS_BLOCK_TRIANGLE_PROCESSING_KEY
 		));
 
-		event.loadFor(IrisVertexFormats.TERRAIN, parent -> new IrisPolygonProcessor(
-				parent,
-				IrisVertexFormats.TERRAIN,
-				VertexFormat.Mode.QUADS,
-				IRIS_BLOCK_QUAD_PROCESSING_KEY
-		));
-
 		event.loadFor(IrisVertexFormats.ENTITY, parent -> new IrisPolygonProcessor(
 				parent,
-				IrisVertexFormats.ENTITY,
-				VertexFormat.Mode.TRIANGLES,
+				IRIS_ENTITY_QUAD_PROCESSING_KEY,
 				IRIS_ENTITY_TRIANGLE_PROCESSING_KEY
 		));
 
-		event.loadFor(IrisVertexFormats.ENTITY, parent -> new IrisPolygonProcessor(
-				parent,
-				IrisVertexFormats.ENTITY,
-				VertexFormat.Mode.QUADS,
-				IRIS_ENTITY_QUAD_PROCESSING_KEY
-		));
-
 		event.loadFor(IrisVertexFormats.GLYPH, parent -> new IrisPolygonProcessor(
 				parent,
-				IrisVertexFormats.GLYPH,
-				VertexFormat.Mode.QUADS,
-				IRIS_GLYPH_QUAD_PROCESSING_KEY
-		));
-
-		event.loadFor(IrisVertexFormats.GLYPH, parent -> new IrisPolygonProcessor(
-				parent,
-				IrisVertexFormats.GLYPH,
-				VertexFormat.Mode.TRIANGLES,
+				IRIS_GLYPH_QUAD_PROCESSING_KEY,
 				IRIS_GLYPH_TRIANGLE_PROCESSING_KEY
 		));
 	}

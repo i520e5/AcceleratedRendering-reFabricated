@@ -1,8 +1,8 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools;
 
+import com.github.argon4w.acceleratedrendering.core.backends.GLConstants;
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffer;
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.MutableBuffer;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
 import com.github.argon4w.acceleratedrendering.core.utils.SimpleResetPool;
 import lombok.Getter;
 import org.apache.commons.lang3.mutable.MutableLong;
@@ -11,16 +11,14 @@ import static org.lwjgl.opengl.GL44.GL_DYNAMIC_STORAGE_BIT;
 
 public class StagingBufferPool extends SimpleResetPool<StagingBufferPool.StagingBuffer, Void> {
 
-	private			final AcceleratedBufferSetPool.BufferSet	bufferSet;
 	@Getter private	final MutableBuffer							bufferOut;
 	private			final MutableLong							bufferSegments;
 	private			final MutableLong							bufferOutSize;
 	private			final MutableLong							bufferOutUsedSize;
 
-	public StagingBufferPool(int size, AcceleratedBufferSetPool.BufferSet bufferSet) {
+	public StagingBufferPool(int size) {
 		super(size, null);
 
-		this.bufferSet			= bufferSet;
 		this.bufferOut			= new MutableBuffer	(64L * size, GL_DYNAMIC_STORAGE_BIT);
 		this.bufferSegments		= new MutableLong	(0L);
 		this.bufferOutSize		= new MutableLong	(64L * size);
@@ -61,7 +59,7 @@ public class StagingBufferPool extends SimpleResetPool<StagingBufferPool.Staging
 
 	@Override
 	public boolean test(StagingBuffer stagingBuffer) {
-		return bufferOutUsedSize.addAndGet(stagingBuffer.getSize()) <= (2L * 1024L * 1024L * 1024L);
+		return bufferOutUsedSize.addAndGet(stagingBuffer.getSize()) <= GLConstants.MAX_SHADER_STORAGE_BLOCK_SIZE;
 	}
 
 	@Getter
@@ -98,8 +96,8 @@ public class StagingBufferPool extends SimpleResetPool<StagingBufferPool.Staging
 			super.reset();
 		}
 
-		public void allocateOffset() {
-			offset = bufferSegments.getAndAdd(position / bufferSet.getVertexSize());
+		public void allocateOffset(long additional) {
+			offset = bufferSegments.getAndAdd(position + additional);
 		}
 	}
 }

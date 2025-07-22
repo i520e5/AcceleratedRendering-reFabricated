@@ -1,16 +1,13 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.environments;
 
-import com.github.argon4w.acceleratedrendering.core.backends.buffers.EmptyServerBuffer;
-import com.github.argon4w.acceleratedrendering.core.backends.buffers.IServerBuffer;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.VertexFormatMemoryLayout;
-import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
+import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramSelector;
 import com.github.argon4w.acceleratedrendering.core.programs.culling.LoadCullingProgramSelectorEvent;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.TransformProgramDispatcher;
-import com.github.argon4w.acceleratedrendering.core.programs.extras.IExtraVertexData;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.IPolygonProcessor;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.LoadPolygonProcessorEvent;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -56,11 +53,6 @@ public class VanillaBufferEnvironment implements IBufferEnvironment {
 	}
 
 	@Override
-	public IExtraVertexData getExtraVertex(VertexFormat.Mode mode) {
-		return cullingProgramSelector.getExtraVertex(mode);
-	}
-
-	@Override
 	public IMemoryLayout<VertexFormatElement> getLayout() {
 		return layout;
 	}
@@ -76,7 +68,7 @@ public class VanillaBufferEnvironment implements IBufferEnvironment {
 	}
 
 	@Override
-	public IPolygonProgramDispatcher selectCullProgramDispatcher(RenderType renderType) {
+	public ICullingProgramDispatcher selectCullProgramDispatcher(RenderType renderType) {
 		return cullingProgramSelector.select(renderType);
 	}
 
