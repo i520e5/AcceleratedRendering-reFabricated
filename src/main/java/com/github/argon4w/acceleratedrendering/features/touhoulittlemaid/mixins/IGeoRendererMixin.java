@@ -16,8 +16,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
 
-@ExtensionMethod(VertexConsumerExtension.class)
 @Pseudo
+@ExtensionMethod(VertexConsumerExtension.class)
 @Mixin			(IGeoRenderer			.class)
 public interface IGeoRendererMixin {
 
