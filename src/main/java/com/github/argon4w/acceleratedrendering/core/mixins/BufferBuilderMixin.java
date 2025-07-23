@@ -29,8 +29,8 @@ public class BufferBuilderMixin implements IAccelerationHolder, IAcceleratedVert
 	@Unique
 	@Override
 	public VertexConsumer initAcceleration(RenderType renderType) {
-		this.renderType			= renderType;
-		this.bufferSources		= renderType.isOutline()
+		this.renderType		= renderType;
+		this.bufferSources	= renderType.isOutline()
 				? CoreBuffers.OUTLINE
 				: CoreBuffers.getCoreBufferSourceSet();
 

@@ -2,6 +2,9 @@ package com.github.argon4w.acceleratedrendering.core.mixins;
 
 import com.github.argon4w.acceleratedrendering.core.CoreBuffers;
 import com.github.argon4w.acceleratedrendering.core.CoreFeature;
+import com.github.argon4w.acceleratedrendering.core.meshes.ClientMesh;
+import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
+import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -83,5 +86,21 @@ public class LevelRendererMixin {
 		CoreBuffers.POS_COLOR_TEX_LIGHT	.drawBuffers();
 
 		original.call(instance);
+	}
+
+	@Inject(
+			method	= "close",
+			at		= @At("TAIL")
+	)
+	public void deleteBuffers(CallbackInfo ci) {
+		CoreBuffers.ENTITY				.delete();
+		CoreBuffers.BLOCK				.delete();
+		CoreBuffers.POS					.delete();
+		CoreBuffers.POS_TEX				.delete();
+		CoreBuffers.POS_TEX_COLOR		.delete();
+		CoreBuffers.POS_COLOR_TEX_LIGHT	.delete();
+		ComputeShaderProgramLoader		.delete();
+		ServerMesh.Builder.INSTANCE		.delete();
+		ClientMesh.Builder.INSTANCE		.delete();
 	}
 }

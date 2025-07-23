@@ -7,8 +7,8 @@ import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffe
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.DrawContextPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.ElementBufferPool;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.MeshUploaderPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.StagingBufferPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.MeshUploaderPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.environments.IBufferEnvironment;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.utils.LoopResetPool;
@@ -146,12 +146,12 @@ public class AcceleratedBufferSetPool extends LoopResetPool<AcceleratedBufferSet
 			if (		!	bufferEnvironment	.getLayout			().equals		(layout)
 					||		elementBufferPool	.getElementBufferOut().isResized	()
 					||		vertexBuffer		.getBufferOut		().isResized	()) {
-				layout = bufferEnvironment						.getLayout			();
-				elementBufferPool	.getElementBufferOut()		.bind				(GL_ELEMENT_ARRAY_BUFFER);
-				elementBufferPool	.getElementBufferOut()		.resetResized		();
-				vertexBuffer		.getBufferOut()				.bind				(GL_ARRAY_BUFFER);
-				vertexBuffer		.getBufferOut()				.resetResized		();
-				bufferEnvironment								.setupBufferState	();
+				layout = bufferEnvironment					.getLayout			();
+				elementBufferPool	.getElementBufferOut()	.bind				(GL_ELEMENT_ARRAY_BUFFER);
+				elementBufferPool	.getElementBufferOut()	.resetResized		();
+				vertexBuffer		.getBufferOut()			.bind				(GL_ARRAY_BUFFER);
+				vertexBuffer		.getBufferOut()			.resetResized		();
+				bufferEnvironment							.setupBufferState	();
 			}
 		}
 
@@ -190,10 +190,6 @@ public class AcceleratedBufferSetPool extends LoopResetPool<AcceleratedBufferSet
 
 		public long reserveSharing() {
 			return sharingBuffer.reserve(4L * 4L * 4L + 4L * 4L * 3L);
-		}
-
-		public IMemoryLayout<VertexFormatElement> getLayout() {
-			return bufferEnvironment.getLayout();
 		}
 
 		public void setUsed() {

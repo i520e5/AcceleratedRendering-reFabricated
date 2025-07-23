@@ -72,8 +72,8 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 	}
 
 	@Override
-	public ICullingProgramDispatcher selectCullProgramDispatcher(RenderType renderType) {
-		return getSubSet().selectCullProgramDispatcher(renderType);
+	public ICullingProgramDispatcher selectCullingProgramDispatcher(RenderType renderType) {
+		return getSubSet().selectCullingProgramDispatcher(renderType);
 	}
 
 	@Override
@@ -115,8 +115,8 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 
 			this.meshUploadingProgramDispatcher	= new MeshUploadingProgramDispatcher(meshUploadingProgramKey);
 			this.transformProgramDispatcher		= new TransformProgramDispatcher	(transformProgramKey);
-			this.cullingProgramSelector			= ModLoader.postEventWithReturn		(new LoadCullingProgramSelectorEvent(this.irisVertexFormat)).getSelector();
-			this.polygonProcessor				= ModLoader.postEventWithReturn		(new LoadPolygonProcessorEvent		(this.irisVertexFormat)).getProcessor();
+			this.cullingProgramSelector			= ModLoader.postEventWithReturn		(new LoadCullingProgramSelectorEvent(this.irisVertexFormat)).getSelector	();
+			this.polygonProcessor				= ModLoader.postEventWithReturn		(new LoadPolygonProcessorEvent		(this.irisVertexFormat)).getProcessor	();
 		}
 
 		@Override
@@ -150,7 +150,7 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 		}
 
 		@Override
-		public ICullingProgramDispatcher selectCullProgramDispatcher(RenderType renderType) {
+		public ICullingProgramDispatcher selectCullingProgramDispatcher(RenderType renderType) {
 			return cullingProgramSelector.select(renderType);
 		}
 

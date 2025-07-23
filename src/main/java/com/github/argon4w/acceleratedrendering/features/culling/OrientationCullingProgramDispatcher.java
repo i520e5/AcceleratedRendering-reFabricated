@@ -5,7 +5,6 @@ import com.github.argon4w.acceleratedrendering.core.backends.programs.Uniform;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
 import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingProgramDispatcher;
-import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.resources.ResourceLocation;
@@ -50,7 +49,6 @@ public class OrientationCullingProgramDispatcher implements ICullingProgramDispa
 				DISPATCH_COUNT_Y_Z,
 				DISPATCH_COUNT_Y_Z
 		);
-		program.resetProgram();
 
 		return program.getBarrierFlags();
 	}

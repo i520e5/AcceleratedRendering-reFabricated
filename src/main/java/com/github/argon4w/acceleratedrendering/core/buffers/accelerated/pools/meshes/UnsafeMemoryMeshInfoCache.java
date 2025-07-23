@@ -46,11 +46,13 @@ public class UnsafeMemoryMeshInfoCache implements IMeshInfoCache {
 			address	= UNSAFE.reallocateMemory(address, size * MESH_INFO_SIZE);
 		}
 
-		UNSAFE.putInt(address + count * MESH_INFO_SIZE + COLOR_OFFSET,			color);
-		UNSAFE.putInt(address + count * MESH_INFO_SIZE + LIGHT_OFFSET,			light);
-		UNSAFE.putInt(address + count * MESH_INFO_SIZE + OVERLAY_OFFSET,		overlay);
-		UNSAFE.putInt(address + count * MESH_INFO_SIZE + SHARING_OFFSET,		sharing);
-		UNSAFE.putInt(address + count * MESH_INFO_SIZE + SHOULD_CULL_OFFSET,	shouldCull);
+		var infoAddress = address + count * MESH_INFO_SIZE;
+
+		UNSAFE.putInt(infoAddress + COLOR_OFFSET,		color);
+		UNSAFE.putInt(infoAddress + LIGHT_OFFSET,		light);
+		UNSAFE.putInt(infoAddress + OVERLAY_OFFSET,		overlay);
+		UNSAFE.putInt(infoAddress + SHARING_OFFSET,		sharing);
+		UNSAFE.putInt(infoAddress + SHOULD_CULL_OFFSET,	shouldCull);
 
 		count ++;
 	}

@@ -38,8 +38,8 @@ public class VanillaBufferEnvironment implements IBufferEnvironment {
 
 		this.meshUploadingProgramDispatcher	= new MeshUploadingProgramDispatcher(meshUploadingProgramKey);
 		this.transformProgramDispatcher		= new TransformProgramDispatcher	(transformProgramKey);
-		this.cullingProgramSelector			= ModLoader.postEventWithReturn		(new LoadCullingProgramSelectorEvent(this.vertexFormat)).getSelector();
-		this.polygonProcessor				= ModLoader.postEventWithReturn		(new LoadPolygonProcessorEvent		(this.vertexFormat)).getProcessor();
+		this.cullingProgramSelector			= ModLoader.postEventWithReturn		(new LoadCullingProgramSelectorEvent(this.vertexFormat)).getSelector	();
+		this.polygonProcessor				= ModLoader.postEventWithReturn		(new LoadPolygonProcessorEvent		(this.vertexFormat)).getProcessor	();
 	}
 
 	@Override
@@ -68,7 +68,7 @@ public class VanillaBufferEnvironment implements IBufferEnvironment {
 	}
 
 	@Override
-	public ICullingProgramDispatcher selectCullProgramDispatcher(RenderType renderType) {
+	public ICullingProgramDispatcher selectCullingProgramDispatcher(RenderType renderType) {
 		return cullingProgramSelector.select(renderType);
 	}
 

@@ -1,8 +1,9 @@
 package com.github.argon4w.acceleratedrendering.core.programs.culling;
 
-import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
 
-public interface ICullingProgramDispatcher extends IPolygonProgramDispatcher {
+public interface ICullingProgramDispatcher {
 
-	boolean shouldCull();
+	int		dispatch	(AcceleratedBufferBuilder builder);
+	boolean	shouldCull	();
 }

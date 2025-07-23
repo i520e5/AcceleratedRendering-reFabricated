@@ -11,10 +11,10 @@ import static org.lwjgl.opengl.GL44.GL_DYNAMIC_STORAGE_BIT;
 
 public class StagingBufferPool extends SimpleResetPool<StagingBufferPool.StagingBuffer, Void> {
 
-	@Getter private	final MutableBuffer							bufferOut;
-	private			final MutableLong							bufferSegments;
-	private			final MutableLong							bufferOutSize;
-	private			final MutableLong							bufferOutUsedSize;
+	@Getter private	final MutableBuffer	bufferOut;
+	private			final MutableLong	bufferSegments;
+	private			final MutableLong	bufferOutSize;
+	private			final MutableLong	bufferOutUsedSize;
 
 	public StagingBufferPool(int size) {
 		super(size, null);

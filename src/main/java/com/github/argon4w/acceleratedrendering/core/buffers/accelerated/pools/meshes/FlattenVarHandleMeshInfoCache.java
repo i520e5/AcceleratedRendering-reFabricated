@@ -47,11 +47,13 @@ public class FlattenVarHandleMeshInfoCache implements IMeshInfoCache {
 			cache	= Arrays.copyOf(cache, size * MESH_INFO_SIZE);
 		}
 
-		HANDLE.set(cache, count * MESH_INFO_SIZE + COLOR_OFFSET,		color);
-		HANDLE.set(cache, count * MESH_INFO_SIZE + LIGHT_OFFSET,		light);
-		HANDLE.set(cache, count * MESH_INFO_SIZE + OVERLAY_OFFSET,		overlay);
-		HANDLE.set(cache, count * MESH_INFO_SIZE + SHARING_OFFSET,		sharing);
-		HANDLE.set(cache, count * MESH_INFO_SIZE + SHOULD_CULL_OFFSET,	shouldCull);
+		var infoIndex = count * MESH_INFO_SIZE;
+
+		HANDLE.set(cache, infoIndex + COLOR_OFFSET,			color);
+		HANDLE.set(cache, infoIndex + LIGHT_OFFSET,			light);
+		HANDLE.set(cache, infoIndex + OVERLAY_OFFSET,		overlay);
+		HANDLE.set(cache, infoIndex + SHARING_OFFSET,		sharing);
+		HANDLE.set(cache, infoIndex + SHOULD_CULL_OFFSET,	shouldCull);
 
 		count ++;
 	}

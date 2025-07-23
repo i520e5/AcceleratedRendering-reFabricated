@@ -10,6 +10,6 @@ public interface IMesh {
 	interface Builder {
 
 		IMesh	build(IMeshCollector collector);
-		void	close();
+		void	delete();
 	}
 }

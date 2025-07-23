@@ -1,6 +1,5 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools;
 
-import com.github.argon4w.acceleratedrendering.core.backends.buffers.IServerBuffer;
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffer;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryInterface;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.SimpleMemoryInterface;
@@ -32,7 +31,7 @@ public class DrawContextPool extends SimpleResetPool<DrawContextPool.IndirectDra
 
 	@Override
 	public void delete() {
-		super.getContext().delete();
+		getContext().delete();
 	}
 
 	@Override
@@ -42,7 +41,6 @@ public class DrawContextPool extends SimpleResetPool<DrawContextPool.IndirectDra
 	}
 
 	public class IndirectDrawContext {
-
 
 		public static	final int				ELEMENT_COUNT_INDEX		= 0;
 		public static	final IMemoryInterface	INDIRECT_COUNT			= new SimpleMemoryInterface(0L * 4L, 4);
@@ -54,8 +52,8 @@ public class DrawContextPool extends SimpleResetPool<DrawContextPool.IndirectDra
 		private			final long				commandOffset;
 
 		public IndirectDrawContext(int index) {
-			this.commandOffset		= index * 20L;
-			var address				= context	.reserve(20L);
+			this.commandOffset	= index * 20L;
+			var address			= context		.reserve(20L);
 
 			INDIRECT_COUNT						.putInt	(address, 0);
 			INDIRECT_INSTANCE_COUNT				.putInt	(address, 1);

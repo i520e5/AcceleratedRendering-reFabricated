@@ -97,7 +97,7 @@ public record ServerMesh(
 		}
 
 		@Override
-		public void close() {
+		public void delete() {
 			for (		var buffers	: BUFFERS.values()) {
 				for (	var buffer	: buffers) {
 					buffer.delete();

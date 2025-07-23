@@ -1,8 +1,8 @@
 package com.github.argon4w.acceleratedrendering.compat.iris.mixins.acceleratedrendering;
 
 import com.github.argon4w.acceleratedrendering.compat.iris.interfaces.IIrisMeshInfoCache;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.FlattenVarHandleMeshInfoCache;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.UnsafeMemoryMeshInfoCache;
+import com.llamalad7.mixinextras.sugar.Local;
 import net.irisshaders.iris.uniforms.CapturedRenderingState;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,15 +15,12 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import sun.misc.Unsafe;
 
-import java.lang.invoke.VarHandle;
-
 @Mixin(UnsafeMemoryMeshInfoCache.class)
 public class UnsafeMemoryMeshInfoCacheMixin implements IIrisMeshInfoCache {
 
 	@Shadow @Final public	static			Unsafe		UNSAFE;
 
 	@Shadow private							long		address;
-	@Shadow private							int			count;
 
 	@Unique private			static final	long		IRIS_MESH_INFO_SIZE				= 8L * 4L;
 	@Unique private			static final	long		RENDERED_ENTITY_OFFSET			= 5L * 4L;
@@ -56,16 +53,17 @@ public class UnsafeMemoryMeshInfoCacheMixin implements IIrisMeshInfoCache {
 			)
 	)
 	public void addIrisData(
-			int				color,
-			int				light,
-			int				overlay,
-			int				sharing,
-			int				shouldCull,
-			CallbackInfo	ci
+			int									color,
+			int									light,
+			int									overlay,
+			int									sharing,
+			int									shouldCull,
+			CallbackInfo						ci,
+			@Local(name = "infoAddress") long	infoAddress
 	) {
-		UNSAFE.putInt(address + count * IRIS_MESH_INFO_SIZE + RENDERED_ENTITY_OFFSET,		CapturedRenderingState.INSTANCE.getCurrentRenderedEntity		());
-		UNSAFE.putInt(address + count * IRIS_MESH_INFO_SIZE + RENDERED_BLOCK_ENTITY_OFFSET,	CapturedRenderingState.INSTANCE.getCurrentRenderedBlockEntity	());
-		UNSAFE.putInt(address + count * IRIS_MESH_INFO_SIZE + RENDERED_ITEM_OFFSET,			CapturedRenderingState.INSTANCE.getCurrentRenderedItem			());
+		UNSAFE.putInt(infoAddress + RENDERED_ENTITY_OFFSET,			CapturedRenderingState.INSTANCE.getCurrentRenderedEntity		());
+		UNSAFE.putInt(infoAddress + RENDERED_BLOCK_ENTITY_OFFSET,	CapturedRenderingState.INSTANCE.getCurrentRenderedBlockEntity	());
+		UNSAFE.putInt(infoAddress + RENDERED_ITEM_OFFSET,			CapturedRenderingState.INSTANCE.getCurrentRenderedItem			());
 	}
 
 	@Override

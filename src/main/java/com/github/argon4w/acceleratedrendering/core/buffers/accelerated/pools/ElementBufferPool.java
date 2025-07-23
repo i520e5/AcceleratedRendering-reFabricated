@@ -26,20 +26,19 @@ public class ElementBufferPool extends SimpleResetPool<ElementBufferPool.Element
 	}
 
 	public void prepare() {
-		elementBufferOut		.resizeTo	(elementBufferOutSize.getValue());
-		elementBufferSegments	.setValue	(0L);
-	}
-
-	@Override
-	public void delete() {
-		elementBufferOut.delete();
-		super			.delete();
+		elementBufferOut		.resizeTo(elementBufferOutSize.getValue());
+		elementBufferSegments	.setValue(0L);
 	}
 
 	@Override
 	public void reset() {
 		elementBufferOutUsedSize.setValue	(0L);
 		super					.reset		();
+	}
+
+	@Override
+	public void delete() {
+		elementBufferOut.delete();
 	}
 
 	@Override

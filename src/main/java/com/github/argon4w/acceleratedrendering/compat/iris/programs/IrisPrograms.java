@@ -7,7 +7,6 @@ import com.github.argon4w.acceleratedrendering.core.programs.LoadComputeShaderEv
 import com.github.argon4w.acceleratedrendering.core.programs.culling.LoadCullingProgramSelectorEvent;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.LoadPolygonProcessorEvent;
 import com.github.argon4w.acceleratedrendering.core.utils.ResourceLocationUtils;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import net.irisshaders.iris.vertices.IrisVertexFormats;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.SubscribeEvent;

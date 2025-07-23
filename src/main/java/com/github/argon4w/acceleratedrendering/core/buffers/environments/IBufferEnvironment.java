@@ -21,7 +21,7 @@ public interface IBufferEnvironment {
 	IMemoryLayout<VertexFormatElement>	getLayout							();
 	MeshUploadingProgramDispatcher		selectMeshUploadingProgramDispatcher();
 	TransformProgramDispatcher			selectTransformProgramDispatcher	();
-	ICullingProgramDispatcher			selectCullProgramDispatcher			(RenderType			renderType);
+	ICullingProgramDispatcher			selectCullingProgramDispatcher		(RenderType			renderType);
 	IPolygonProgramDispatcher			selectProcessingProgramDispatcher	(VertexFormat.Mode	mode);
 	int									getVertexSize						();
 

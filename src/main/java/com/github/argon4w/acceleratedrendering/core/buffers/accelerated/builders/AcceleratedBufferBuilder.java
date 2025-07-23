@@ -3,8 +3,8 @@ package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builder
 import com.github.argon4w.acceleratedrendering.core.CoreFeature;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.ElementBufferPool;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.MeshUploaderPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.StagingBufferPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.MeshUploaderPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryInterface;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
@@ -89,23 +89,21 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		this.elementSegment				= elementSegment;
 		this.bufferSet					= bufferSet;
 
-		this.layout						= bufferSet			.getLayout		();
-		this.renderType					= renderType;
-		this.cullingProgramDispatcher	= this
-				.bufferSet
-				.getBufferEnvironment		()
-				.selectCullProgramDispatcher(this.renderType);
-		this.mode						= this.renderType	.mode;
-		this.vertexSize					= this.bufferSet	.getVertexSize	();
-		this.polygonSize				= this.mode			.primitiveLength;
-		this.polygonElementCount		= this.mode			.indexCount		(this.polygonSize);
 
-		this.posOffset					= this.layout.getElement		(VertexFormatElement.POSITION);
-		this.colorOffset				= this.layout.getElement		(VertexFormatElement.COLOR);
-		this.uv0Offset					= this.layout.getElement		(VertexFormatElement.UV0);
-		this.uv1Offset					= this.layout.getElement		(VertexFormatElement.UV1);
-		this.uv2Offset					= this.layout.getElement		(VertexFormatElement.UV2);
-		this.normalOffset				= this.layout.getElement		(VertexFormatElement.NORMAL);
+		this.renderType					= renderType;
+		this.layout						= this.bufferSet.getBufferEnvironment()	.getLayout						();
+		this.cullingProgramDispatcher	= this.bufferSet.getBufferEnvironment()	.selectCullingProgramDispatcher	(this.renderType);
+		this.mode						= this.renderType						.mode;
+		this.vertexSize					= this.bufferSet						.getVertexSize					();
+		this.polygonSize				= this.mode								.primitiveLength;
+		this.polygonElementCount		= this.mode								.indexCount						(this.polygonSize);
+
+		this.posOffset					= this.layout							.getElement						(VertexFormatElement.POSITION);
+		this.colorOffset				= this.layout							.getElement						(VertexFormatElement.COLOR);
+		this.uv0Offset					= this.layout							.getElement						(VertexFormatElement.UV0);
+		this.uv1Offset					= this.layout							.getElement						(VertexFormatElement.UV1);
+		this.uv2Offset					= this.layout							.getElement						(VertexFormatElement.UV2);
+		this.normalOffset				= this.layout							.getElement						(VertexFormatElement.NORMAL);
 
 		this.elementCount				= 0;
 		this.meshVertexCount			= 0;

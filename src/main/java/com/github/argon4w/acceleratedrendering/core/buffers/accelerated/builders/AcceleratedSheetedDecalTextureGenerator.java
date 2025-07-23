@@ -23,12 +23,12 @@ public class AcceleratedSheetedDecalTextureGenerator extends AcceleratedVertexCo
 	private                             final	Matrix3f		normalInverse;
 	private								final	float			textureScale;
 
-	private final	Vector3f		cachedCamera;
-	private	final	Vector3f		cachedNormal;
+	private								final	Vector3f		cachedCamera;
+	private								final	Vector3f		cachedNormal;
 
-	private			float			vertexX;
-	private			float			vertexY;
-	private			float			vertexZ;
+	private										float			vertexX;
+	private										float			vertexY;
+	private										float			vertexZ;
 
 	public AcceleratedSheetedDecalTextureGenerator(
 			VertexConsumer	delegate,

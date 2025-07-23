@@ -106,6 +106,12 @@ public class ComputeShaderProgramLoader extends SimplePreparableReloadListener<M
 		return program;
 	}
 
+	public static void delete() {
+		for (var program : COMPUTE_SHADERS.values()) {
+			program.delete();
+		}
+	}
+
 	public static boolean isProgramsLoaded() {
 		return LOADED;
 	}

@@ -38,6 +38,10 @@ public class AcceleratedBufferSource extends MultiBufferSource.BufferSource impl
 		this.used						= false;
 	}
 
+	public void delete() {
+		acceleratedBufferSetPool.delete();
+	}
+
 	@Override
 	public void endLastBatch() {
 

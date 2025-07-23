@@ -2,6 +2,7 @@ package com.github.argon4w.acceleratedrendering.core;
 
 import com.github.argon4w.acceleratedrendering.configs.FeatureConfig;
 import com.github.argon4w.acceleratedrendering.configs.FeatureStatus;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.MeshInfoCacheType;
 
 import java.util.ArrayDeque;
 
@@ -34,6 +35,10 @@ public class CoreFeature {
 
 	public static boolean shouldCacheIdenticalPose() {
 		return getCacheIdenticalPoseSetting() == FeatureStatus.ENABLED;
+	}
+
+	public static MeshInfoCacheType getMeshInfoCacheType() {
+		return FeatureConfig.CONFIG.coreMeshInfoCacheType.get();
 	}
 
 	public static void disableForceTranslucentAcceleration() {

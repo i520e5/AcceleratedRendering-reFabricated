@@ -1,10 +1,10 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes;
 
+import com.github.argon4w.acceleratedrendering.core.CoreFeature;
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.MappedBuffer;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryInterface;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.SimpleMemoryInterface;
 import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
-import com.github.argon4w.acceleratedrendering.core.utils.SimpleCachedArray;
 import com.github.argon4w.acceleratedrendering.core.utils.SimpleResetPool;
 import lombok.Getter;
 import lombok.Setter;
@@ -43,30 +43,30 @@ public class MeshUploaderPool extends SimpleResetPool<MeshUploaderPool.MeshUploa
 
 	public static class MeshUploader implements IntFunction<MeshInfo> {
 
-		public static	final	int							MESH_INFO_BUFFER_INDEX		= 8;
-		public static	final	int							EXTRA_INFO_BUFFER_INDEX		= 9;
+		public static	final	int					MESH_INFO_BUFFER_INDEX	= 8;
+		public static	final	int					EXTRA_INFO_BUFFER_INDEX	= 9;
 
-		public static	final	long						MESH_INFO_SIZE				= 5L * 4L;
-		public static	final	long						EXTRA_INFO_SIZE				= 2L * 4L;
+		public static	final	long				MESH_INFO_SIZE			= 5L * 4L;
+		public static	final	long				EXTRA_INFO_SIZE			= 2L * 4L;
 
-		public static	final	IMemoryInterface			MESH_INFO_SHARING			= new SimpleMemoryInterface(0L * 4L, MESH_INFO_SIZE);
-		public static	final	IMemoryInterface			MESH_INFO_SHOULD_CULL		= new SimpleMemoryInterface(1L * 4L, MESH_INFO_SIZE);
-		public static	final	IMemoryInterface			MESH_INFO_COLOR				= new SimpleMemoryInterface(2L * 4L, MESH_INFO_SIZE);
-		public static	final	IMemoryInterface			MESH_INFO_UV1				= new SimpleMemoryInterface(3L * 4L, MESH_INFO_SIZE);
-		public static	final	IMemoryInterface			MESH_INFO_UV2				= new SimpleMemoryInterface(4L * 4L, MESH_INFO_SIZE);
+		public static	final	IMemoryInterface	MESH_INFO_SHARING		= new SimpleMemoryInterface(0L * 4L, MESH_INFO_SIZE);
+		public static	final	IMemoryInterface	MESH_INFO_SHOULD_CULL	= new SimpleMemoryInterface(1L * 4L, MESH_INFO_SIZE);
+		public static	final	IMemoryInterface	MESH_INFO_COLOR			= new SimpleMemoryInterface(2L * 4L, MESH_INFO_SIZE);
+		public static	final	IMemoryInterface	MESH_INFO_UV1			= new SimpleMemoryInterface(3L * 4L, MESH_INFO_SIZE);
+		public static	final	IMemoryInterface	MESH_INFO_UV2			= new SimpleMemoryInterface(4L * 4L, MESH_INFO_SIZE);
 
-		private			final	MappedBuffer 				meshInfoBuffer;
-		private			final	MappedBuffer				extraInfoBuffer;
-		@Getter private	final	IMeshInfoCache				meshInfos;
+		private			final	MappedBuffer 		meshInfoBuffer;
+		private			final	MappedBuffer		extraInfoBuffer;
+		@Getter private	final	IMeshInfoCache		meshInfos;
 
-		@Getter	@Setter private	ServerMesh					serverMesh;
+		@Getter	@Setter private	ServerMesh			serverMesh;
 
 		public MeshUploader() {
 			this.meshInfoBuffer		= new MappedBuffer			(64L);
 			this.extraInfoBuffer	= new MappedBuffer			(64L);
-			this.meshInfos			= MeshInfoCacheType.create	(MeshInfoCacheType.UNSAFE);
+			this.meshInfos			= MeshInfoCacheType.create	(CoreFeature.getMeshInfoCacheType());
 
-			this.serverMesh		= null;
+			this.serverMesh			= null;
 		}
 
 		public void addUpload(

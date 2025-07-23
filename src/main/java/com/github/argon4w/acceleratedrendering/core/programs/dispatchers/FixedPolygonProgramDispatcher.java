@@ -38,7 +38,6 @@ public class FixedPolygonProgramDispatcher implements IPolygonProgramDispatcher 
 				DISPATCH_COUNT_Y_Z,
 				DISPATCH_COUNT_Y_Z
 		);
-		program.resetProgram();
 
 		return program.getBarrierFlags();
 	}
