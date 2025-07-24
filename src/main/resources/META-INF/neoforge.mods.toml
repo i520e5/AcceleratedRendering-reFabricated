@@ -80,10 +80,6 @@ config="${mod_id}.feature.simplebedrockmodel.mixins.json"
 [[mixins]]
 config="${mod_id}.feature.touhoulittlemaid.mixins.json"
 
-# Eyelib Acceleration Feature Mixins
-[[mixins]]
-config="${mod_id}.feature.eyelib.mixins.json"
-
 # Geckolib Acceleration Feature Mixins
 [[mixins]]
 config="${mod_id}.feature.geckolib.mixins.json"
