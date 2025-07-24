@@ -1,27 +1,35 @@
+# AcceleratedRendering 加速渲染
+This is a client side only entity rendering optimization MOD, aiming at improving performance when rendering large amount of entities 
+or complex modded entities with significant amount of vertices with compute shaders on GPU while being compatible with shader packs, 
+other MODs and their entities.
 
-Installation information
-=======
+![benchmark.jpg](benchmark.jpg)
 
-This template repository can be directly cloned to get you started with a new
-mod. Simply create a new repository cloned from this one, by following the
-instructions at [github](https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template).
+## 🍝Sponsorship
+This MOD is almost done by myself and takes thousands of hours of my own time working and testing on it to be released.
+Sponsorships from players can ensure the future development, innovation and optimization of this MOD. Thanks for everyone
+that support this MOD! If you like it and want to support my work on development of AcceleratedRendering, please consider sponsor me at [爱发电](https://afdian.com/a/argon4w)
 
-Once you have your clone, simply open the repository in the IDE of your choice. The usual recommendation for an IDE is either IntelliJ IDEA or Eclipse.
+## ✨Why need this MOD
+Minecraft has a poor immediate rendering system for rendering entities (including block entities) that is inherited from 
+OpenGL immediate rendering mode that older versions of Minecraft uses. It transforms and uploads vertices on the **single render thread** on **CPU** 
+every frame the entities are rendered, which takes a huge amount of time spending on these operations and left CPU and GPU idle with a very low FPS 
+when rendering large amount of vertices.
 
-> **Note**: For Eclipse, use tasks in `Launch Group` instead of ones founds in `Java Application`. A preparation task must run before launching the game. NeoGradle uses launch groups to do these subsequently.
+## ⚙️How it works
+AcceleratedRendering constructs a unique rendering pipeline that caches the "original" vertices (vertices before the transform) 
+into meshes and transforms them parallel in GPU using compute shaders. Then draw the transformed vertices with the original shader. 
+In this way, this MOD can make entity rendering much more efficient by moving off transforming stress from the CPU 
+at the same time being compatible with shader packs (currently support Iris Shaders). All acceleration features can be disabled
+for better compatibility.
 
-If at any point you are missing libraries in your IDE, or you've run into problems you can
-run `gradlew --refresh-dependencies` to refresh the local cache. `gradlew clean` to reset everything 
-{this does not affect your code} and then start the process again.
+## 🖥️Hardware Requirements
+AcceleratedRendering requires OpenGL 4.6 to work properly for the usage of persistently mapped buffers and compute shaders.
+Graphics cards like NVIDIA GT 400 Series and Intel HD Graphics 520/530 or newer will fit this requirement.
+This MOD has been tested on NVIDIA GTX 1660Ti Max-Q, NVIDIA GTX 3070Ti Laptop, NVIDIA GTX 4090 Laptop, RX 580, RX 5600XT.
+Mobile devices are **not currently supported**.
 
-Mapping Names:
-============
-By default, the MDK is configured to use the official mapping names from Mojang for methods and fields 
-in the Minecraft codebase. These names are covered by a specific license. All modders should be aware of this
-license. For the latest license text, refer to the mapping file itself, or the reference copy here:
-https://github.com/NeoForged/NeoForm/blob/main/Mojang.md
-
-Additional Resources: 
-==========
-Community Documentation: https://docs.neoforged.net/  
-NeoForged Discord: https://discord.neoforged.net/
+## 🛠️Configuration
+Configuration file can be found in ``<your Minecraft>/.minecraft/config/acceleratedrendering-client.toml``. You can modify
+acceleration features in this file or in game (some specific configurations needs to restart the game to take effect).
+In game configuration editor can be found in ``Mods > Accelerated Rendering > Config``. 
