@@ -4,7 +4,7 @@
 目的是改善在渲染大量实体或拥有大量顶点的复杂MOD实体的情况下产生的渲染性能问题,
 与此同时尽可能与光影MOD和其他MOD及其自定义实体兼容.
 
-![Benchmark](benchmark.jpg)
+![Benchmark](images/benchmark.jpg)
 
 ## 🍝赞助
 加速渲染基本由我一人完成, 花费了数千小时对其进行开发和测试, 才得以发布.
@@ -41,7 +41,7 @@ This is a client side only entity rendering optimization MOD, aiming at improvin
 or complex modded entities with significant amount of vertices with compute shaders on GPU while being compatible with shader packs,
 other MODs and their entities.
 
-![Benchmark](benchmark.jpg)
+![Benchmark](images/benchmark.jpg)
 
 ## 🍝Sponsorship
 

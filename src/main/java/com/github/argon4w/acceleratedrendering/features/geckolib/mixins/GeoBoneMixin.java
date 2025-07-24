@@ -69,28 +69,30 @@ public class GeoBoneMixin implements IAcceleratedRenderer<Void> {
 			RenderUtil.translateAwayFromPivotPoint	(poseStack, cube);
 
 			var pose			= poseStack	.last	();
-			var localTransform	= pose		.pose	();
-			var localNormal		= pose		.normal	();
+			var cubeTransform	= pose		.pose	();
+			var cubeNormal		= pose		.normal	();
 
 			for (var quad : cube.quads()) {
-				var polygonNormal = localNormal.transform(new Vector3f(quad.normal()));
+				if (quad != null) {
+					var polygonNormal = cubeNormal.transform(new Vector3f(quad.normal()));
 
-				for (var vertex : quad.vertices()) {
-					var vertexPosition = localTransform.transform(new Vector4f(vertex.position(), 1.0f));
+					for (var vertex : quad.vertices()) {
+						var vertexPosition = cubeTransform.transform(new Vector4f(vertex.position(), 1.0f));
 
-					meshBuilder.addVertex(
-							vertexPosition	.x,
-							vertexPosition	.y,
-							vertexPosition	.z,
-							color,
-							vertex			.texU(),
-							vertex			.texV(),
-							overlay,
-							light,
-							polygonNormal	.x,
-							polygonNormal	.y,
-							polygonNormal	.z
-					);
+						meshBuilder.addVertex(
+								vertexPosition	.x,
+								vertexPosition	.y,
+								vertexPosition	.z,
+								color,
+								vertex			.texU(),
+								vertex			.texV(),
+								overlay,
+								light,
+								polygonNormal	.x,
+								polygonNormal	.y,
+								polygonNormal	.z
+						);
+					}
 				}
 			}
 		}
