@@ -12,13 +12,14 @@ import net.minecraft.client.renderer.RenderType;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
-public class AcceleratedBufferSources {
+public class AcceleratedBufferSources implements Function<RenderType, VertexConsumer> {
 
-	private final Map<VertexFormat, IAcceleratedBufferSource>	sources;
-	private final Set<VertexFormat.Mode>						validModes;
-	private final Set<String>									invalidNames;
-	private final boolean										canSort;
+	private			final	Map<VertexFormat, IAcceleratedBufferSource>	sources;
+	private			final	Set<VertexFormat.Mode>						validModes;
+	private			final	Set<String>									invalidNames;
+	private			final	boolean										canSort;
 
 	private AcceleratedBufferSources(
 			Map<VertexFormat, IAcceleratedBufferSource>	sources,
@@ -32,7 +33,8 @@ public class AcceleratedBufferSources {
 		this.canSort		= canSort;
 	}
 
-	public VertexConsumer get(RenderType pRenderType) {
+	@Override
+	public VertexConsumer apply(RenderType pRenderType) {
 		if (			pRenderType		!= null
 				&& (	CoreFeature		.shouldForceAccelerateTranslucent	() || canSort || !pRenderType.sortOnUpload)
 				&&		validModes		.contains							(pRenderType.mode)

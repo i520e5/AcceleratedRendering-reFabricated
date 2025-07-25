@@ -30,16 +30,4 @@ public class ShadowRendererMixin {
 		IrisCompatBuffers.POS_TEX_SHADOW		.drawBuffers();
 		IrisCompatBuffers.POS_TEX_COLOR_SHADOW	.drawBuffers();
 	}
-
-	@Inject(
-			method	= "destroy",
-			at		= @At("TAIL")
-	)
-	public void deleteBuffers(CallbackInfo ci) {
-		IrisCompatBuffers.BLOCK_SHADOW			.delete();
-		IrisCompatBuffers.ENTITY_SHADOW			.delete();
-		IrisCompatBuffers.GLYPH_SHADOW			.delete();
-		IrisCompatBuffers.POS_TEX_SHADOW		.delete();
-		IrisCompatBuffers.POS_TEX_COLOR_SHADOW	.delete();
-	}
 }

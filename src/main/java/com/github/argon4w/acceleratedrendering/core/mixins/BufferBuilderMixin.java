@@ -1,7 +1,6 @@
 package com.github.argon4w.acceleratedrendering.core.mixins;
 
 import com.github.argon4w.acceleratedrendering.core.CoreBuffers;
-import com.github.argon4w.acceleratedrendering.core.buffers.AcceleratedBufferSources;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.IAccelerationHolder;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IAcceleratedVertexConsumer;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.VertexConsumerExtension;
@@ -17,15 +16,16 @@ import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 @ExtensionMethod(VertexConsumerExtension.class)
 @Mixin			(BufferBuilder			.class)
 public class BufferBuilderMixin implements IAccelerationHolder, IAcceleratedVertexConsumer {
 
-	@Unique private			RenderType					renderType		= null;
-	@Unique private			AcceleratedBufferSources	bufferSources	= null;
-	@Unique private final	Supplier<VertexConsumer>	acceleration	= Suppliers.memoize(() -> bufferSources.get(renderType));
+	@Unique private			RenderType								renderType		= null;
+	@Unique private			Function<RenderType, VertexConsumer>	bufferSources	= renderType -> null;
+	@Unique private final	Supplier<VertexConsumer>				acceleration	= Suppliers.memoize(() -> bufferSources.apply(renderType));
 
 	@Unique
 	@Override

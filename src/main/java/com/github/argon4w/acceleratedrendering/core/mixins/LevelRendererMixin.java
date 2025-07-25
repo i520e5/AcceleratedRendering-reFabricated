@@ -1,5 +1,6 @@
 package com.github.argon4w.acceleratedrendering.core.mixins;
 
+import com.github.argon4w.acceleratedrendering.compat.iris.IrisCompatBuffers;
 import com.github.argon4w.acceleratedrendering.core.CoreBuffers;
 import com.github.argon4w.acceleratedrendering.core.CoreFeature;
 import com.github.argon4w.acceleratedrendering.core.meshes.ClientMesh;
@@ -102,5 +103,11 @@ public class LevelRendererMixin {
 		ComputeShaderProgramLoader		.delete();
 		ServerMesh.Builder.INSTANCE		.delete();
 		ClientMesh.Builder.INSTANCE		.delete();
+
+		IrisCompatBuffers.BLOCK_SHADOW			.delete();
+		IrisCompatBuffers.ENTITY_SHADOW			.delete();
+		IrisCompatBuffers.GLYPH_SHADOW			.delete();
+		IrisCompatBuffers.POS_TEX_SHADOW		.delete();
+		IrisCompatBuffers.POS_TEX_COLOR_SHADOW	.delete();
 	}
 }
