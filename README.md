@@ -25,9 +25,9 @@ Minecraft拥有一个羸弱的, 继承使用OpenGL立即模式的老版本的渲
 
 ## 🖥️硬件要求
 
-加速渲染因为使用了持久映射缓冲区(Persistently Mapped Buffer)和计算着色器, 因此需要OpenGL 4.6才能正常工作.
+加速渲染因为使用了持久映射缓冲区(Persistently Mapped Buffer)和计算着色器, 因此需要OpenGL 4.4才能正常工作.
 理论上NVIDIA GT 400 Series, Intel HD Graphics 520/530及以上的显卡可以满足这个要求.
-加速渲染已经在发布前在NVIDIA GTX 1660Ti Max-Q, NVIDIA GTX 3070Ti Laptop, NVIDIA GTX 4090 Laptop, RX 580, RX 5600XT上经过测试.
+加速渲染已经在发布前在NVIDIA GTX 1660Ti Max-Q, NVIDIA RTX 3070Ti Laptop, NVIDIA RTX 4090 Laptop, RX 580, RX 5600XT上经过测试.
 移动设备目前**不受支持**.
 
 ## 🛠️配置
@@ -66,7 +66,7 @@ for better compatibility.
 
 ## 🖥️Hardware Requirements
 
-AcceleratedRendering requires OpenGL 4.6 to work properly for the usage of persistently mapped buffers and compute shaders.
+AcceleratedRendering requires OpenGL 4.4 to work properly for the usage of persistently mapped buffers and compute shaders.
 Graphics cards like NVIDIA GT 400 Series and Intel HD Graphics 520/530 or newer will fit this requirement.
 This MOD has been tested on NVIDIA GTX 1660Ti Max-Q, NVIDIA RTX 3070Ti Laptop, NVIDIA RTX 4090 Laptop, RX 580, RX 5600XT.
 Mobile devices are **not currently supported**.
