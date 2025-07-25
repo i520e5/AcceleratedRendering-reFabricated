@@ -56,6 +56,10 @@ config="${mod_id}.core.mixins.json"
 [[mixins]]
 config="${mod_id}.compat.iris.mixins.json"
 
+# Immediately Fast Compatibility Feature Mixins
+[[mixins]]
+config="${mod_id}.feature.immediatelyfast.mixins.json"
+
 # Accelerated Entity Rendering Feature Mixins
 [[mixins]]
 config="${mod_id}.feature.entities.mixins.json"

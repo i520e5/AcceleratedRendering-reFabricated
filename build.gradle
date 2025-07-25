@@ -143,6 +143,7 @@ dependencies {
     compileOnly "maven.modrinth:touhou-little-maid:3XPwCAVd"
     compileOnly 'com.github.TartaricAcid:SimpleBedrockModel:neoforge-1.21.1-1.2.1-release'
     compileOnly "maven.modrinth:geckolib:QEqpUJ1G"
+    compileOnly "maven.modrinth:immediatelyfast:1.6.6+1.21.1-neoforge"
     compileOnly "org.projectlombok:lombok:1.18.38"
 
     annotationProcessor "org.projectlombok:lombok:1.18.38"
