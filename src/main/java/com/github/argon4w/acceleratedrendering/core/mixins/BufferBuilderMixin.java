@@ -6,6 +6,7 @@ import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.IAcceler
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.IAcceleratedVertexConsumer;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.VertexConsumerExtension;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
+import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
 import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -29,10 +30,12 @@ public class BufferBuilderMixin implements IAccelerationHolder, IAcceleratedVert
 	@Unique
 	@Override
 	public VertexConsumer initAcceleration(RenderType renderType) {
-		this.renderType		= renderType;
-		this.bufferSources	= renderType.isOutline()
-				? CoreBuffers.OUTLINE
-				: CoreBuffers.getCoreBufferSourceSet();
+		if (ComputeShaderProgramLoader.isProgramsLoaded()) {
+			this.renderType		= renderType;
+			this.bufferSources	= renderType.isOutline()
+					? CoreBuffers.OUTLINE
+					: CoreBuffers.getCoreBufferSourceSet();
+		}
 
 		return (VertexConsumer) this;
 	}

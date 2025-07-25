@@ -21,14 +21,14 @@ Minecraft拥有一个羸弱的, 继承使用OpenGL立即模式的老版本的渲
 
 加速渲染构建了一个独特的渲染管线, 将变换前的顶点缓存至模型中, 并在需要渲染时将其提交到GPU使用计算着色器进行多线程并行变换.
 之后使用原本渲染系统中所使用的着色器进行渲染绘制. 通过这个渲染管线, 加速渲染可以在将实体渲染效率大幅提升,
-将CPU压力转移的同时维持对光影MOD的兼容性 (当前兼容Iris Shaders). 并且所有渲染特性都可以被关闭以保证兼容性
+将CPU压力转移的同时维持对光影MOD的兼容性 (当前兼容Iris Shaders). 并且所有渲染特性都可以被关闭以保证兼容性.
 
 ## 🖥️硬件要求
 
 加速渲染因为使用了持久映射缓冲区(Persistently Mapped Buffer)和计算着色器, 因此需要OpenGL 4.6才能正常工作.
 理论上NVIDIA GT 400 Series, Intel HD Graphics 520/530及以上的显卡可以满足这个要求.
 加速渲染已经在发布前在NVIDIA GTX 1660Ti Max-Q, NVIDIA GTX 3070Ti Laptop, NVIDIA GTX 4090 Laptop, RX 580, RX 5600XT上经过测试.
-移动设备目前不受支持.
+移动设备目前**不受支持**.
 
 ## 🛠️配置
 配置文件可以在``<Minecraft安装位置>/.minecraft/config/acceleratedrendering-client.toml``找到. 你可以通过配置文件修改加速特性或在游戏内进行修改.

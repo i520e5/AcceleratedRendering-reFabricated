@@ -139,10 +139,9 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html54
     implementation "maven.modrinth:sodium:mc1.21.1-0.6.9-neoforge"
     implementation "maven.modrinth:iris:1.8.8+1.21.1-neoforge"
-    implementation "maven.modrinth:touhou-little-maid:3XPwCAVd"
 
+    compileOnly "maven.modrinth:touhou-little-maid:3XPwCAVd"
     compileOnly 'com.github.TartaricAcid:SimpleBedrockModel:neoforge-1.21.1-1.2.1-release'
-    compileOnly "io.github.tt432:eyelib:21.1.10"
     compileOnly "maven.modrinth:geckolib:QEqpUJ1G"
     compileOnly "org.projectlombok:lombok:1.18.38"
 
