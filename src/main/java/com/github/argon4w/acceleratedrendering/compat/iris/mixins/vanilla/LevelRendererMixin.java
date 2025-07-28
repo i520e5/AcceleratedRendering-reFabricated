@@ -33,6 +33,10 @@ public class LevelRendererMixin {
 							value	= "INVOKE",
 							target	= "Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;endBatch()V",
 							ordinal = 2
+					),
+					@At(
+							value	= "CONSTANT",
+							args	= "stringValue=translucent"
 					)
 			}
 	)
