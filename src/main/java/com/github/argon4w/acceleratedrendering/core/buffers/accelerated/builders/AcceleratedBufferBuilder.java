@@ -1,7 +1,7 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders;
 
 import com.github.argon4w.acceleratedrendering.core.CoreFeature;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedRingBuffers;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.ElementBufferPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.StagingBufferPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.MeshUploaderPool;
@@ -44,7 +44,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 	@Getter private						final	StagingBufferPool			.StagingBuffer		vertexBuffer;
 	@Getter private						final	StagingBufferPool			.StagingBuffer		varyingBuffer;
 	@Getter private						final	ElementBufferPool			.ElementSegment		elementSegment;
-	private								final	AcceleratedBufferSetPool	.BufferSet			bufferSet;
+	private								final	AcceleratedRingBuffers		.Buffers			buffers;
 
 
 	@EqualsAndHashCode.Include private 	final	IMemoryLayout<VertexFormatElement>				layout;
@@ -81,21 +81,21 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 			StagingBufferPool		.StagingBuffer	vertexBuffer,
 			StagingBufferPool		.StagingBuffer	varyingBuffer,
 			ElementBufferPool		.ElementSegment	elementSegment,
-			AcceleratedBufferSetPool.BufferSet		bufferSet,
+			AcceleratedRingBuffers	.Buffers		buffers,
 			RenderType								renderType
 	) {
 		this.meshUploaders				= new Reference2ObjectLinkedOpenHashMap<>();
 		this.vertexBuffer				= vertexBuffer;
 		this.varyingBuffer				= varyingBuffer;
 		this.elementSegment				= elementSegment;
-		this.bufferSet					= bufferSet;
+		this.buffers					= buffers;
 
 
 		this.renderType					= renderType;
-		this.layout						= this.bufferSet.getBufferEnvironment()	.getLayout						();
-		this.cullingProgramDispatcher	= this.bufferSet.getBufferEnvironment()	.selectCullingProgramDispatcher	(this.renderType);
+		this.layout						= this.buffers.getBufferEnvironment()	.getLayout						();
+		this.cullingProgramDispatcher	= this.buffers.getBufferEnvironment()	.selectCullingProgramDispatcher	(this.renderType);
 		this.mode						= this.renderType						.mode;
-		this.vertexSize					= this.bufferSet						.getVertexSize					();
+		this.vertexSize					= this.buffers							.getVertexSize					();
 		this.polygonSize				= this.mode								.primitiveLength;
 		this.polygonElementCount		= this.mode								.indexCount						(this.polygonSize);
 
@@ -326,8 +326,8 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		cachedTransform	= cachedTransformValue	.set			(transform);
 		cachedNormal	= cachedNormalValue		.set			(normal);
 
-		sharingAddress	= bufferSet				.reserveSharing	();
-		cachedSharing	= bufferSet				.getSharing		();
+		sharingAddress	= buffers				.reserveSharing	();
+		cachedSharing	= buffers				.getSharing		();
 		activeSharing	= cachedSharing;
 
 		SHARING_TRANSFORM	.putMatrix4f(sharingAddress, transform);
@@ -415,7 +415,7 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 		meshVertexCount		= meshVertexCount + meshSize;
 
 		if (meshUploader == null) {
-			meshUploader = bufferSet.getMeshUploader();
+			meshUploader = buffers	.getMeshUploader();
 			meshUploader			.setServerMesh	(serverMesh);
 			meshUploaders			.put			(serverMesh, meshUploader);
 		}
@@ -467,8 +467,8 @@ public class AcceleratedBufferBuilder implements IAcceleratedVertexConsumer, Ver
 	}
 
 	@Override
-	public AcceleratedBufferSetPool.BufferSet getBufferSet() {
-		return bufferSet;
+	public AcceleratedRingBuffers.Buffers getBufferSet() {
+		return buffers;
 	}
 
 	public int getTotalVertexCount() {

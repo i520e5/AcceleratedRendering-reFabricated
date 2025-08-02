@@ -3,7 +3,7 @@ package com.github.argon4w.acceleratedrendering.core.programs.dispatchers;
 import com.github.argon4w.acceleratedrendering.core.backends.buffers.IServerBuffer;
 import com.github.argon4w.acceleratedrendering.core.backends.programs.ComputeProgram;
 import com.github.argon4w.acceleratedrendering.core.backends.programs.Uniform;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedRingBuffers;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.MeshUploaderPool;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
@@ -45,8 +45,8 @@ public class MeshUploadingProgramDispatcher {
 		this.meshOffsetUniform		= program					.getUniform		("meshOffset");
 	}
 
-	public void dispatch(Collection<AcceleratedBufferBuilder> builders, AcceleratedBufferSetPool.BufferSet bufferSet) {
-		var transformProgramDispatcher = bufferSet
+	public void dispatch(Collection<AcceleratedBufferBuilder> builders, AcceleratedRingBuffers.Buffers buffers) {
+		var transformProgramDispatcher = buffers
 				.getBufferEnvironment				()
 				.selectTransformProgramDispatcher	();
 
@@ -60,8 +60,8 @@ public class MeshUploadingProgramDispatcher {
 			varyingBuffer					.allocateOffset		(meshVertexCount * AcceleratedBufferBuilder.VARYING_SIZE);
 		}
 
-		bufferSet.prepare				();
-		bufferSet.bindTransformBuffers	();
+		buffers.prepare				();
+		buffers.bindTransformBuffers();
 
 		for (var builder : builders) {
 			var vertexBuffer	= builder	.getVertexBuffer	();

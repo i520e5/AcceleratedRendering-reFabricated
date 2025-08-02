@@ -23,39 +23,39 @@ import static org.lwjgl.opengl.GL40.GL_DRAW_INDIRECT_BUFFER;
 import static org.lwjgl.opengl.GL46.GL_ARRAY_BUFFER;
 import static org.lwjgl.opengl.GL46.GL_SHADER_STORAGE_BUFFER;
 
-public class AcceleratedBufferSetPool extends LoopResetPool<AcceleratedBufferSetPool.BufferSet, IBufferEnvironment> {
+public class AcceleratedRingBuffers extends LoopResetPool<AcceleratedRingBuffers.Buffers, IBufferEnvironment> {
 
-	public AcceleratedBufferSetPool(IBufferEnvironment bufferEnvironment) {
+	public AcceleratedRingBuffers(IBufferEnvironment bufferEnvironment) {
 		super(CoreFeature.getPooledBufferSetSize(), bufferEnvironment);
 	}
 
 	@Override
-	protected BufferSet create(IBufferEnvironment context, int i) {
-		return new BufferSet(context);
+	protected Buffers create(IBufferEnvironment context, int i) {
+		return new Buffers(context);
 	}
 
 	@Override
-	protected void reset(BufferSet bufferSet) {
+	protected void reset(Buffers buffers) {
 
 	}
 
 	@Override
-	protected void delete(BufferSet bufferSet) {
-		bufferSet.delete();
+	protected void delete(Buffers buffers) {
+		buffers.delete();
 	}
 
 	@Override
-	protected boolean test(BufferSet bufferSet) {
-		return bufferSet.isFree();
+	protected boolean test(Buffers buffers) {
+		return buffers.isFree();
 	}
 
 	@Override
-	public void init(BufferSet bufferSet) {
-		bufferSet.setUsed();
+	public void init(Buffers buffers) {
+		buffers.setUsed();
 	}
 
 	@Override
-	protected BufferSet fail(boolean force) {
+	protected Buffers fail(boolean force) {
 		var index = 0;
 
 		if (force) {
@@ -69,7 +69,7 @@ public class AcceleratedBufferSetPool extends LoopResetPool<AcceleratedBufferSet
 		return bufferSet;
 	}
 
-	public static class BufferSet {
+	public static class Buffers {
 
 		public static	final	int																		VERTEX_BUFFER_OUT_INDEX		= 1;
 		public static	final	int																		SHARING_BUFFER_INDEX		= 2;
@@ -91,7 +91,7 @@ public class AcceleratedBufferSetPool extends LoopResetPool<AcceleratedBufferSet
 		private 				boolean																	used;
 		private 				IMemoryLayout<VertexFormatElement>										layout;
 
-		public BufferSet(IBufferEnvironment bufferEnvironment) {
+		public Buffers(IBufferEnvironment bufferEnvironment) {
 			var size				= CoreFeature.getPooledElementBufferSize();
 			this.meshUploaderPool	= new MeshUploaderPool					();
 			this.drawContextPool	= new DrawContextPool					(size);

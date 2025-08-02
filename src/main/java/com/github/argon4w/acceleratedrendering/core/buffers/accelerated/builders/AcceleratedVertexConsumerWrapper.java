@@ -1,6 +1,6 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders;
 
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedRingBuffers;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
 import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -41,7 +41,7 @@ public abstract class AcceleratedVertexConsumerWrapper implements IAcceleratedVe
 	}
 
 	@Override
-	public AcceleratedBufferSetPool.BufferSet getBufferSet() {
+	public AcceleratedRingBuffers.Buffers getBufferSet() {
 		return getDelegate		()
 				.getAccelerated	()
 				.getBufferSet	();

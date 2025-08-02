@@ -1,6 +1,6 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders;
 
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSetPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedRingBuffers;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IAcceleratedRenderer;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.renderers.IBufferDecorator;
 import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
@@ -30,7 +30,7 @@ public interface IAcceleratedVertexConsumer extends IBufferDecorator, IBufferGra
 		throw new UnsupportedOperationException("Unsupported Operation.");
 	}
 
-	default AcceleratedBufferSetPool.BufferSet getBufferSet() {
+	default AcceleratedRingBuffers.Buffers getBufferSet() {
 		throw new UnsupportedOperationException("Unsupported Operation.");
 	}
 

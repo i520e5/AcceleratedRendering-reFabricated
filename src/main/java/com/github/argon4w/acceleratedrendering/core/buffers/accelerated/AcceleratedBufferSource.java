@@ -22,53 +22,53 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 
 	@Getter private	final	IBufferEnvironment										bufferEnvironment;
 	private			final	Map<RenderType, DrawContextPool.IndirectDrawContext>	drawContexts;
-	private			final	AcceleratedBufferSetPool								acceleratedBufferSetPool;
-	private			final	Set<AcceleratedBufferSetPool.BufferSet>					bufferSets;
+	private			final	AcceleratedRingBuffers									acceleratedRingBuffers;
+	private			final	Set<AcceleratedRingBuffers.Buffers>						buffers;
 
-	private					AcceleratedBufferSetPool.BufferSet						currentBufferSet;
+	private AcceleratedRingBuffers.Buffers											currentBuffers;
 	private 				boolean													used;
 
 	public AcceleratedBufferSource(IBufferEnvironment bufferEnvironment) {
 		this.bufferEnvironment			= bufferEnvironment;
 		this.drawContexts				= new Object2ObjectLinkedOpenHashMap<>	();
-		this.acceleratedBufferSetPool	= new AcceleratedBufferSetPool			(this.bufferEnvironment);
-		this.currentBufferSet			= this.acceleratedBufferSetPool	.get	(false);
-		this.bufferSets					= ObjectLinkedOpenHashSet		.of		(this.currentBufferSet);
+		this.acceleratedRingBuffers		= new AcceleratedRingBuffers			(this.bufferEnvironment);
+		this.currentBuffers				= this.acceleratedRingBuffers	.get	(false);
+		this.buffers					= ObjectLinkedOpenHashSet		.of		(this.currentBuffers);
 		this.used						= false;
 	}
 
 	public void delete() {
-		acceleratedBufferSetPool.delete();
+		acceleratedRingBuffers.delete();
 	}
 
 	@Override
 	public AcceleratedBufferBuilder getBuffer(RenderType renderType) {
-		var builders	= currentBufferSet	.getBuilders		();
-		var builder		= builders			.getAndMoveToLast	(renderType);
+		var builders	= currentBuffers.getBuilders		();
+		var builder		= builders		.getAndMoveToLast	(renderType);
 
 		if (builder != null) {
 			return builder;
 		}
 
-		var vertexBuffer	= currentBufferSet.getVertexBuffer	();
-		var varyingBuffer	= currentBufferSet.getVaryingBuffer	();
-		var elementSegment	= currentBufferSet.getElementSegment();
+		var vertexBuffer	= currentBuffers.getVertexBuffer	();
+		var varyingBuffer	= currentBuffers.getVaryingBuffer	();
+		var elementSegment	= currentBuffers.getElementSegment	();
 
 		if (vertexBuffer == null) {
-			currentBufferSet	= acceleratedBufferSetPool	.get				(true);
-			builders			= currentBufferSet			.getBuilders		();
-			vertexBuffer		= currentBufferSet			.getVertexBuffer	();
-			varyingBuffer		= currentBufferSet			.getVaryingBuffer	();
-			elementSegment		= currentBufferSet			.getElementSegment	();
+			currentBuffers		= acceleratedRingBuffers.get				(true);
+			builders			= currentBuffers		.getBuilders		();
+			vertexBuffer		= currentBuffers		.getVertexBuffer	();
+			varyingBuffer		= currentBuffers		.getVaryingBuffer	();
+			elementSegment		= currentBuffers		.getElementSegment	();
 
-			bufferSets										.add				(currentBufferSet);
+			buffers.add(currentBuffers);
 		}
 
 		builder = new AcceleratedBufferBuilder(
 				vertexBuffer,
 				varyingBuffer,
 				elementSegment,
-				currentBufferSet,
+				currentBuffers,
 				renderType
 		);
 
@@ -83,10 +83,10 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 			return;
 		}
 
-		for (var bufferSet : bufferSets) {
+		for (var bufferSet : buffers) {
 			var builders	= bufferSet.getBuilders	();
 			var program		= glGetInteger			(GL_CURRENT_PROGRAM);
-			var barrier		= 0;
+			var barrier		= GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT;
 
 			if (builders.isEmpty()) {
 				continue;
@@ -142,14 +142,13 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 				renderType	.clearRenderState	();
 			}
 
-			glMemoryBarrier				(GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
 			bufferSet		.reset		();
 			bufferSet		.setInFlight();
 			drawContexts	.clear		();
 		}
 
 		used				= false;
-		currentBufferSet	= acceleratedBufferSetPool	.get(false);
-		bufferSets										.add(currentBufferSet);
+		currentBuffers		= acceleratedRingBuffers.get(false);
+		buffers										.add(currentBuffers);
 	}
 }
