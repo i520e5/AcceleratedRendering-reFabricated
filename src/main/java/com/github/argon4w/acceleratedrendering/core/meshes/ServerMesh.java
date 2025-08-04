@@ -9,12 +9,16 @@ import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryLayout;
 import com.github.argon4w.acceleratedrendering.core.meshes.collectors.IMeshCollector;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import it.unimi.dsi.fastutil.objects.ReferenceLists;
 import net.minecraft.CrashReport;
 import net.minecraft.ReportedException;
+import org.apache.logging.log4j.core.Core;
 import org.lwjgl.system.MemoryUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -41,8 +45,14 @@ public record ServerMesh(
 
 	public static class Builder implements IMesh.Builder {
 
-		public static final Builder														INSTANCE	= new Builder					();
-		public static final Map<IMemoryLayout<VertexFormatElement>, List<MappedBuffer>>	BUFFERS		= new Object2ObjectOpenHashMap<>();
+		public static final Builder																		INSTANCE;
+		public static final Object2ObjectMap<IMemoryLayout<VertexFormatElement>, List<IServerBuffer>>	BUFFERS;
+
+		static {
+			INSTANCE	= new Builder					();
+			BUFFERS		= new Object2ObjectOpenHashMap<>();
+			BUFFERS.defaultReturnValue					(ReferenceLists.singleton(EmptyServerBuffer.INSTANCE));
+		}
 
 		private Builder() {
 
@@ -64,10 +74,10 @@ public record ServerMesh(
 				return EmptyMesh.INSTANCE;
 			}
 
-			var clientBuffer	= result		.byteBuffer	();
-			var capacity		= clientBuffer	.capacity	();
-			var layout			= collector		.getLayout	();
-			var meshBuffers		= BUFFERS		.get		(layout);
+			var clientBuffer	= result		.byteBuffer		();
+			var capacity		= clientBuffer	.capacity		();
+			var layout			= collector		.getLayout		();
+			var meshBuffers		= BUFFERS		.getOrDefault	(layout, null);
 			var meshBuffer		= (MappedBuffer) null;
 
 			if (meshBuffers == null) {
@@ -76,7 +86,7 @@ public record ServerMesh(
 				meshBuffers	.add						(meshBuffer);
 				BUFFERS		.put 						(layout, meshBuffers);
 			} else {
-				meshBuffer	= meshBuffers.getLast();
+				meshBuffer	= (MappedBuffer) meshBuffers.getLast();
 			}
 
 			if (		meshBuffer.getPosition	() + capacity >= GLConstants.MAX_SHADER_STORAGE_BLOCK_SIZE
@@ -111,18 +121,6 @@ public record ServerMesh(
 					buffer.delete();
 				}
 			}
-		}
-
-		public IServerBuffer getBuffer(IMemoryLayout<VertexFormatElement> layout) {
-			var buffers = BUFFERS.get(layout);
-
-			if (		buffers == null
-					||	buffers.isEmpty()
-			) {
-				return EmptyServerBuffer.INSTANCE;
-			}
-
-			return buffers.getFirst();
 		}
 
 		public static boolean meshBufferCheck(IMeshCollector collector) {

@@ -80,9 +80,9 @@ public class AcceleratedBufferSources implements IAcceleratedBufferSource {
 
 		public Builder source(AcceleratedBufferSource bufferSource) {
 			bufferSource
-					.getBufferEnvironment	()
-					.getVertexFormats		()
-					.forEach				(vertexFormat -> sources.put(vertexFormat, bufferSource));
+					.getEnvironment		()
+					.getVertexFormats	()
+					.forEach			(vertexFormat -> sources.put(vertexFormat, bufferSource));
 
 			return this;
 		}

@@ -23,8 +23,8 @@ import static org.lwjgl.opengl.GL46.*;
 
 public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 
-	@Getter private	final	IBufferEnvironment					bufferEnvironment;
-	private			final	AcceleratedRingBuffers				acceleratedRingBuffers;
+	@Getter private	final	IBufferEnvironment					environment;
+	private			final	AcceleratedRingBuffers				ringBuffers;
 	private			final	Set<AcceleratedRingBuffers.Buffers>	buffers;
 	private			final	IntSet								activeLayers;
 
@@ -32,17 +32,17 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 	private 				boolean								used;
 
 	public AcceleratedBufferSource(IBufferEnvironment bufferEnvironment) {
-		this.bufferEnvironment			= bufferEnvironment;
-		this.acceleratedRingBuffers		= new AcceleratedRingBuffers			(this.bufferEnvironment);
-		this.currentBuffer				= this.acceleratedRingBuffers	.get	(false);
-		this.buffers					= ObjectLinkedOpenHashSet		.of		(this.currentBuffer);
-		this.activeLayers				= new IntAVLTreeSet						();
+		this.environment	= bufferEnvironment;
+		this.ringBuffers	= new AcceleratedRingBuffers		(this.environment);
+		this.currentBuffer	= this.ringBuffers			.get	(false);
+		this.buffers		= ObjectLinkedOpenHashSet	.of		(this.currentBuffer);
+		this.activeLayers	= new IntAVLTreeSet					();
 
-		this.used						= false;
+		this.used			= false;
 	}
 
 	public void delete() {
-		acceleratedRingBuffers.delete();
+		ringBuffers.delete();
 	}
 
 	@Override
@@ -52,13 +52,13 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 			Runnable	before,
 			Runnable	after
 	) {
-		var layerKey		= new LayerKey					(layerIndex, renderType);
-		var builders		= currentBuffer	.getBuilders	();
-		var functions		= currentBuffer	.getFunctions	();
-		var layers			= currentBuffer	.getLayers		();
-		var function		= functions		.get			(layerIndex);
-		var layer			= layers		.get			(layerIndex);
-		var builder			= builders		.get			(layerKey);
+		var layerKey	= new LayerKey					(layerIndex, renderType);
+		var builders	= currentBuffer	.getBuilders	();
+		var functions	= currentBuffer	.getFunctions	();
+		var layers		= currentBuffer	.getLayers		();
+		var function	= functions		.get			(layerIndex);
+		var layer		= layers		.get			(layerIndex);
+		var builder		= builders		.get			(layerKey);
 
 		if (builder != null) {
 			function.addBefore	(before);
@@ -71,16 +71,16 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 		var elementSegment	= currentBuffer.getElementSegment	();
 
 		if (vertexBuffer == null) {
-			currentBuffer	= acceleratedRingBuffers.get				(true);
-			builders		= currentBuffer			.getBuilders		();
-			functions		= currentBuffer			.getFunctions		();
-			layers			= currentBuffer			.getLayers			();
-			function		= functions				.get				(layerIndex);
-			layer			= layers				.get				(layerIndex);
+			currentBuffer	= ringBuffers	.get				(true);
+			builders		= currentBuffer	.getBuilders		();
+			functions		= currentBuffer	.getFunctions		();
+			layers			= currentBuffer	.getLayers			();
+			function		= functions		.get				(layerIndex);
+			layer			= layers		.get				(layerIndex);
 
-			vertexBuffer	= currentBuffer			.getVertexBuffer	();
-			varyingBuffer	= currentBuffer			.getVaryingBuffer	();
-			elementSegment	= currentBuffer			.getElementSegment	();
+			vertexBuffer	= currentBuffer	.getVertexBuffer	();
+			varyingBuffer	= currentBuffer	.getVaryingBuffer	();
+			elementSegment	= currentBuffer	.getElementSegment	();
 
 			buffers.add(currentBuffer);
 		}
@@ -124,9 +124,9 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 				continue;
 			}
 
-			ServerMesh.Builder.INSTANCE	.getBuffer								(bufferEnvironment.getLayout())	.bindBase(GL_SHADER_STORAGE_BUFFER,	MeshUploadingProgramDispatcher.SMALL_MESH_BUFFER_INDEX);
-			bufferEnvironment			.selectMeshUploadingProgramDispatcher	()								.dispatch(builders.values(),		buffer);
-			bufferEnvironment			.selectTransformProgramDispatcher		()								.dispatch(builders.values());
+			ServerMesh.Builder.BUFFERS.get(environment.getLayout())	.getFirst								().bindBase(GL_SHADER_STORAGE_BUFFER,	MeshUploadingProgramDispatcher.SMALL_MESH_BUFFER_INDEX);
+			environment												.selectMeshUploadingProgramDispatcher	().dispatch(builders.values(),			buffer);
+			environment												.selectTransformProgramDispatcher		().dispatch(builders.values());
 
 			for (var layerKey : builders.keySet()) {
 				var builder			= builders	.get				(layerKey);
@@ -146,10 +146,10 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 				buffer							.bindElementBuffer	(elementSegment);
 				drawContext						.bindComputeBuffers	(elementSegment);
 				drawContext						.setRenderType		(renderType);
-				buffer.getLayers().get(layer)	.add				(layer, drawContext);
+				buffer.getLayers().get(layer)	.add				(drawContext);
 
-				barrier |= bufferEnvironment.selectProcessingProgramDispatcher	(mode)	.dispatch(builder);
-				barrier |= builder			.getCullingProgramDispatcher		()		.dispatch(builder);
+				barrier |= environment	.selectProcessingProgramDispatcher	(mode)	.dispatch(builder);
+				barrier |= builder		.getCullingProgramDispatcher		()		.dispatch(builder);
 			}
 
 			glMemoryBarrier	(barrier);
@@ -174,7 +174,7 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 					var renderType	= drawContext	.getRenderType		();
 					renderType						.setupRenderState	();
 
-					var mode	= renderType	.mode		();
+					var mode	= renderType	.mode;
 					var shader	= RenderSystem	.getShader	();
 
 					shader.setDefaultUniforms(
@@ -203,9 +203,9 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 		}
 
 		used				= false;
-		currentBuffer		= acceleratedRingBuffers.get	(false);
-		activeLayers								.clear	();
-		buffers										.clear	();
-		buffers										.add	(currentBuffer);
+		currentBuffer		= ringBuffers	.get	(false);
+		activeLayers						.clear	();
+		buffers								.clear	();
+		buffers								.add	(currentBuffer);
 	}
 }
