@@ -110,8 +110,8 @@ public abstract class SimpleBakedModelMixin implements IAcceleratedBakedModel, I
 				var culledMeshCollector = culledMeshCollectors.get(quad.getTintIndex());
 
 				if (culledMeshCollector == null) {
-					culledMeshCollector = new CulledMeshCollector	(extension	.getRenderType	(),	extension.getBufferSet().getBufferEnvironment().getLayout());
-					culledMeshCollectors.put						(quad		.getTintIndex	(),	culledMeshCollector);
+					culledMeshCollector = new CulledMeshCollector	(extension);
+					culledMeshCollectors.put						(quad.getTintIndex(), culledMeshCollector);
 				}
 
 				var meshBuilder = extension	.decorate	(culledMeshCollector);

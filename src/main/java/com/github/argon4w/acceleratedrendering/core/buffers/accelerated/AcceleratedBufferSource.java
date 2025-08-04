@@ -1,39 +1,43 @@
 package com.github.argon4w.acceleratedrendering.core.buffers.accelerated;
 
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
-import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.DrawContextPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.layers.CustomLayerFunction;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.layers.EmptyLayerFunction;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.layers.LayerKey;
 import com.github.argon4w.acceleratedrendering.core.buffers.environments.IBufferEnvironment;
 import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferUploader;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 import static org.lwjgl.opengl.GL46.*;
 
 public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 
-	@Getter private	final	IBufferEnvironment										bufferEnvironment;
-	private			final	Map<RenderType, DrawContextPool.IndirectDrawContext>	drawContexts;
-	private			final	AcceleratedRingBuffers									acceleratedRingBuffers;
-	private			final	Set<AcceleratedRingBuffers.Buffers>						buffers;
+	@Getter private	final	IBufferEnvironment					bufferEnvironment;
+	private			final	AcceleratedRingBuffers				acceleratedRingBuffers;
+	private			final	Set<AcceleratedRingBuffers.Buffers>	buffers;
+	private			final	IntSet								activeLayers;
 
-	private AcceleratedRingBuffers.Buffers											currentBuffers;
-	private 				boolean													used;
+	private					AcceleratedRingBuffers.Buffers		currentBuffer;
+	private 				boolean								used;
 
 	public AcceleratedBufferSource(IBufferEnvironment bufferEnvironment) {
 		this.bufferEnvironment			= bufferEnvironment;
-		this.drawContexts				= new Object2ObjectLinkedOpenHashMap<>	();
 		this.acceleratedRingBuffers		= new AcceleratedRingBuffers			(this.bufferEnvironment);
-		this.currentBuffers				= this.acceleratedRingBuffers	.get	(false);
-		this.buffers					= ObjectLinkedOpenHashSet		.of		(this.currentBuffers);
+		this.currentBuffer				= this.acceleratedRingBuffers	.get	(false);
+		this.buffers					= ObjectLinkedOpenHashSet		.of		(this.currentBuffer);
+		this.activeLayers				= new IntAVLTreeSet						();
+
 		this.used						= false;
 	}
 
@@ -42,38 +46,66 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 	}
 
 	@Override
-	public AcceleratedBufferBuilder getBuffer(RenderType renderType) {
-		var builders	= currentBuffers.getBuilders		();
-		var builder		= builders		.getAndMoveToLast	(renderType);
+	public AcceleratedBufferBuilder getBuffer(
+			int			layerIndex,
+			RenderType	renderType,
+			Runnable	before,
+			Runnable	after
+	) {
+		var layerKey		= new LayerKey					(layerIndex, renderType);
+		var builders		= currentBuffer	.getBuilders	();
+		var functions		= currentBuffer	.getFunctions	();
+		var layers			= currentBuffer	.getLayers		();
+		var function		= functions		.get			(layerIndex);
+		var layer			= layers		.get			(layerIndex);
+		var builder			= builders		.get			(layerKey);
 
 		if (builder != null) {
+			function.addBefore	(before);
+			function.addAfter	(after);
 			return builder;
 		}
 
-		var vertexBuffer	= currentBuffers.getVertexBuffer	();
-		var varyingBuffer	= currentBuffers.getVaryingBuffer	();
-		var elementSegment	= currentBuffers.getElementSegment	();
+		var vertexBuffer	= currentBuffer.getVertexBuffer		();
+		var varyingBuffer	= currentBuffer.getVaryingBuffer	();
+		var elementSegment	= currentBuffer.getElementSegment	();
 
 		if (vertexBuffer == null) {
-			currentBuffers		= acceleratedRingBuffers.get				(true);
-			builders			= currentBuffers		.getBuilders		();
-			vertexBuffer		= currentBuffers		.getVertexBuffer	();
-			varyingBuffer		= currentBuffers		.getVaryingBuffer	();
-			elementSegment		= currentBuffers		.getElementSegment	();
+			currentBuffer	= acceleratedRingBuffers.get				(true);
+			builders		= currentBuffer			.getBuilders		();
+			functions		= currentBuffer			.getFunctions		();
+			layers			= currentBuffer			.getLayers			();
+			function		= functions				.get				(layerIndex);
+			layer			= layers				.get				(layerIndex);
 
-			buffers.add(currentBuffers);
+			vertexBuffer	= currentBuffer			.getVertexBuffer	();
+			varyingBuffer	= currentBuffer			.getVaryingBuffer	();
+			elementSegment	= currentBuffer			.getElementSegment	();
+
+			buffers.add(currentBuffer);
+		}
+
+		if (layer == null) {
+			function	= new CustomLayerFunction	();
+			layer 		= new ReferenceArrayList<>	();
+			layers		.put						(layerIndex, layer);
+			functions	.put						(layerIndex, function);
 		}
 
 		builder = new AcceleratedBufferBuilder(
 				vertexBuffer,
 				varyingBuffer,
 				elementSegment,
-				currentBuffers,
+				currentBuffer,
 				renderType
 		);
 
 		used = true;
-		builders.put(renderType, builder);
+
+		builders	.put		(layerKey, builder);
+		function	.addBefore	(before);
+		function	.addAfter	(after);
+		activeLayers.add		(layerIndex);
 
 		return builder;
 	}
@@ -83,72 +115,97 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 			return;
 		}
 
-		for (var bufferSet : buffers) {
-			var builders	= bufferSet.getBuilders	();
-			var program		= glGetInteger			(GL_CURRENT_PROGRAM);
-			var barrier		= GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT;
+		for (var buffer : buffers) {
+			var builders	= buffer.getBuilders();
+			var program		= glGetInteger		(GL_CURRENT_PROGRAM);
+			var barrier		= 0;
 
 			if (builders.isEmpty()) {
 				continue;
 			}
 
 			ServerMesh.Builder.INSTANCE	.getBuffer								(bufferEnvironment.getLayout())	.bindBase(GL_SHADER_STORAGE_BUFFER,	MeshUploadingProgramDispatcher.SMALL_MESH_BUFFER_INDEX);
-			bufferEnvironment			.selectMeshUploadingProgramDispatcher	()								.dispatch(builders.values(),		bufferSet);
+			bufferEnvironment			.selectMeshUploadingProgramDispatcher	()								.dispatch(builders.values(),		buffer);
 			bufferEnvironment			.selectTransformProgramDispatcher		()								.dispatch(builders.values());
 
-			for (var renderType : builders.keySet()) {
-				var builder			= builders	.get				(renderType);
+			for (var layerKey : builders.keySet()) {
+				var builder			= builders	.get				(layerKey);
 				var elementSegment	= builder	.getElementSegment	();
+				var renderType		= layerKey	.renderType			();
+				var layer			= layerKey	.layer				();
 
 				if (builder.isEmpty()) {
 					continue;
 				}
 
 				var mode		= renderType.mode;
-				var drawContext	= bufferSet	.getDrawContext();
+				var drawContext	= buffer	.getDrawContext();
 
-				builder			.setOutdated		();
-				elementSegment	.allocateOffset		();
-				bufferSet		.bindElementBuffer	(elementSegment);
-				drawContext		.bindComputeBuffers	(elementSegment);
-				drawContexts	.put				(renderType, drawContext);
+				builder							.setOutdated		();
+				elementSegment					.allocateOffset		();
+				buffer							.bindElementBuffer	(elementSegment);
+				drawContext						.bindComputeBuffers	(elementSegment);
+				drawContext						.setRenderType		(renderType);
+				buffer.getLayers().get(layer)	.add				(layer, drawContext);
 
 				barrier |= bufferEnvironment.selectProcessingProgramDispatcher	(mode)	.dispatch(builder);
 				barrier |= builder			.getCullingProgramDispatcher		()		.dispatch(builder);
 			}
 
-			glMemoryBarrier					(barrier);
-			glUseProgram					(program);
-			BufferUploader	.invalidate		();
-			bufferSet		.bindDrawBuffers();
+			glMemoryBarrier	(barrier);
+			glUseProgram	(program);
+		}
 
-			for (var renderType : drawContexts.keySet()) {
-				renderType						.setupRenderState	();
+		for (		int layerIndex	: activeLayers) {
+			for (	var buffer		: buffers) {
+				var function	= buffer.getFunctions	().getOrDefault(layerIndex, EmptyLayerFunction	.INSTANCE);
+				var layer		= buffer.getLayers		().getOrDefault(layerIndex, List				.of());
 
-				var drawContext	= drawContexts	.get				(renderType);
-				var shader		= RenderSystem	.getShader			();
-				var mode		= renderType	.mode;
+				if (layer.isEmpty()) {
+					continue;
+				}
 
-				shader.setDefaultUniforms(
-						mode,
-						RenderSystem			.getModelViewMatrix	(),
-						RenderSystem			.getProjectionMatrix(),
-						Minecraft.getInstance()	.getWindow			()
-				);
+				glMemoryBarrier					(GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
+				BufferUploader	.invalidate		();
+				buffer			.bindDrawBuffers();
+				function		.runBefore		();
 
-				shader		.apply				();
-				drawContext	.drawElements		(mode);
-				shader		.clear				();
-				renderType	.clearRenderState	();
+				for (var drawContext : layer) {
+					var renderType	= drawContext	.getRenderType		();
+					renderType						.setupRenderState	();
+
+					var mode	= renderType	.mode		();
+					var shader	= RenderSystem	.getShader	();
+
+					shader.setDefaultUniforms(
+							mode,
+							RenderSystem			.getModelViewMatrix	(),
+							RenderSystem			.getProjectionMatrix(),
+							Minecraft.getInstance()	.getWindow			()
+					);
+
+					shader		.apply				();
+					drawContext	.drawElements		(mode);
+					shader		.clear				();
+					renderType	.clearRenderState	();
+				}
+
+				function.runAfter			();
+				function.reset				();
+				layer	.clear				();
+				buffer	.unbindVertexArray	();
 			}
+		}
 
-			bufferSet		.reset		();
-			bufferSet		.setInFlight();
-			drawContexts	.clear		();
+		for (var buffer : buffers) {
+			buffer.reset		();
+			buffer.setInFlight	();
 		}
 
 		used				= false;
-		currentBuffers		= acceleratedRingBuffers.get(false);
-		buffers										.add(currentBuffers);
+		currentBuffer		= acceleratedRingBuffers.get	(false);
+		activeLayers								.clear	();
+		buffers										.clear	();
+		buffers										.add	(currentBuffer);
 	}
 }

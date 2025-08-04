@@ -11,12 +11,15 @@ import com.github.argon4w.acceleratedrendering.core.meshes.collectors.IMeshColle
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
+import net.minecraft.CrashReport;
+import net.minecraft.ReportedException;
 import org.lwjgl.system.MemoryUtil;
 
+import java.util.List;
 import java.util.Map;
 
 public record ServerMesh(
-		long			size,
+		int				size,
 		long			offset,
 		IServerBuffer	meshBuffer
 ) implements IMesh {
@@ -38,8 +41,8 @@ public record ServerMesh(
 
 	public static class Builder implements IMesh.Builder {
 
-		public static final Builder																		INSTANCE	= new Builder					();
-		public static final Map<IMemoryLayout<VertexFormatElement>, ReferenceArrayList<MappedBuffer>>	BUFFERS		= new Object2ObjectOpenHashMap<>();
+		public static final Builder														INSTANCE	= new Builder					();
+		public static final Map<IMemoryLayout<VertexFormatElement>, List<MappedBuffer>>	BUFFERS		= new Object2ObjectOpenHashMap<>();
 
 		private Builder() {
 
@@ -47,14 +50,14 @@ public record ServerMesh(
 
 		@Override
 		public IMesh build(IMeshCollector collector) {
-			var vertexCount		= collector.getVertexCount();
+			var vertexCount = collector.getVertexCount();
 
 			if (vertexCount == 0) {
 				return EmptyMesh.INSTANCE;
 			}
 
-			var builder			= collector	.getBuffer	();
-			var result			= builder	.build		();
+			var builder	= collector	.getBuffer	();
+			var result	= builder	.build		();
 
 			if (result == null) {
 				builder.close();
@@ -62,27 +65,30 @@ public record ServerMesh(
 			}
 
 			var clientBuffer	= result		.byteBuffer	();
+			var capacity		= clientBuffer	.capacity	();
 			var layout			= collector		.getLayout	();
 			var meshBuffers		= BUFFERS		.get		(layout);
+			var meshBuffer		= (MappedBuffer) null;
 
 			if (meshBuffers == null) {
+				meshBuffer	= new MappedBuffer			(64L);
 				meshBuffers = new ReferenceArrayList<>	();
-				BUFFERS.put 							(layout, meshBuffers);
+				meshBuffers	.add						(meshBuffer);
+				BUFFERS		.put 						(layout, meshBuffers);
+			} else {
+				meshBuffer	= meshBuffers.getLast();
 			}
 
-			var meshBuffer		= meshBuffers.isEmpty() ? null : meshBuffers	.getLast	();
-			var capacity		= clientBuffer									.capacity	();
-
-			if (		meshBuffer == null
-					||	(meshBuffer.getPosition() + capacity >= GLConstants.MAX_SHADER_STORAGE_BLOCK_SIZE && checkMeshBuffer())
+			if (		meshBuffer.getPosition	() + capacity >= GLConstants.MAX_SHADER_STORAGE_BLOCK_SIZE
+					&&	meshBufferCheck			(collector)
 			) {
 				meshBuffer = new MappedBuffer	(64L);
 				meshBuffers.add					(meshBuffer);
 			}
 
-			var position		= meshBuffer	.getPosition();
-			var srcAddress		= MemoryUtil	.memAddress0(clientBuffer);
-			var destAddress		= meshBuffer	.reserve	(capacity);
+			var position	= meshBuffer.getPosition();
+			var srcAddress	= MemoryUtil.memAddress0(clientBuffer);
+			var destAddress	= meshBuffer.reserve	(capacity);
 
 			MemoryUtil	.memCopy(
 					srcAddress,
@@ -110,20 +116,30 @@ public record ServerMesh(
 		public IServerBuffer getBuffer(IMemoryLayout<VertexFormatElement> layout) {
 			var buffers = BUFFERS.get(layout);
 
-			if (buffers == null) {
-				return EmptyServerBuffer.INSTANCE;
-			}
-
-			if (buffers.isEmpty()) {
+			if (		buffers == null
+					||	buffers.isEmpty()
+			) {
 				return EmptyServerBuffer.INSTANCE;
 			}
 
 			return buffers.getFirst();
 		}
 
-		public static boolean checkMeshBuffer() {
+		public static boolean meshBufferCheck(IMeshCollector collector) {
 			if (CoreFeature.shouldUploadMeshImmediately()) {
-				throw new OutOfMemoryError("Mesh buffer exceeds limit.");
+				collector
+						.getBuffer	()
+						.close		();
+
+				var crashReport	= CrashReport.forThrowable	(new OutOfMemoryError("Mesh buffer size exceeds limits."), "Exception in building meshes.");
+				var category	= crashReport.addCategory	("Mesh being built");
+
+				category.setDetail("Mesh type",						"Server side mesh");
+				category.setDetail("Mesh size (vertices)",			collector				.getVertexCount());
+				category.setDetail("Mesh layout size (bytes)",		collector.getLayout()	.getSize());
+				category.setDetail("Mesh buffer limits (bytes)",	GLConstants				.MAX_SHADER_STORAGE_BLOCK_SIZE);
+
+				throw new ReportedException(crashReport);
 			}
 
 			return true;
