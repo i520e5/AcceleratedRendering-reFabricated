@@ -85,6 +85,7 @@ public class MeshUploadingProgramDispatcher {
 			) {
 				var serverMesh	= uploader					.getServerMesh	();
 				var meshCount	= uploader.getMeshInfos()	.getMeshCount	();
+				var meshDense	= serverMesh				.forceDense		() || meshCount >= 128;
 				var meshBuffer	= serverMesh				.meshBuffer		();
 				var dense		= denseUploaders			.get			(meshBuffer);
 				var sparse		= sparseUploaders			.get			(meshBuffer);
@@ -96,9 +97,9 @@ public class MeshUploadingProgramDispatcher {
 					sparseUploaders	.put				(meshBuffer, sparse);
 				}
 
-				(meshCount < 128
-						? sparse
-						: dense).add(uploader);
+				(meshDense
+						? dense
+						: sparse).add(uploader);
 			}
 
 			for (		var meshBuffer	: sparseUploaders.keySet()) {

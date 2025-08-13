@@ -19,6 +19,7 @@ import java.util.List;
 public record ServerMesh(
 		int				size,
 		long			offset,
+		boolean			forceDense,
 		IServerBuffer	meshBuffer
 ) implements IMesh {
 
@@ -53,7 +54,7 @@ public record ServerMesh(
 		}
 
 		@Override
-		public IMesh build(IMeshCollector collector) {
+		public IMesh build(IMeshCollector collector, boolean forceDense) {
 			var vertexCount = collector.getVertexCount();
 
 			if (vertexCount == 0) {
@@ -104,8 +105,14 @@ public record ServerMesh(
 			return new ServerMesh(
 					vertexCount,
 					position / layout.getSize(),
+					forceDense,
 					meshBuffer
 			);
+		}
+
+		@Override
+		public IMesh build(IMeshCollector collector) {
+			return build(collector, false);
 		}
 
 		@Override
