@@ -3,7 +3,6 @@ package com.github.argon4w.acceleratedrendering.features.items.mixins;
 import com.github.argon4w.acceleratedrendering.core.CoreBuffers;
 import com.github.argon4w.acceleratedrendering.core.CoreFeature;
 import com.github.argon4w.acceleratedrendering.features.items.IAcceleratedGuiGraphics;
-import com.google.common.util.concurrent.Runnables;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.platform.Lighting;
@@ -27,7 +26,10 @@ public class GuiGraphicsMixin implements IAcceleratedGuiGraphics {
 
 	@Inject(
 			method	= "renderItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/item/ItemStack;IIII)V",
-			at		= @At("HEAD")
+			at		= @At(
+					value	= "INVOKE",
+					target	= "Lnet/minecraft/client/renderer/entity/ItemRenderer;getModel(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;I)Lnet/minecraft/client/resources/model/BakedModel;"
+			)
 	)
 	public void startRenderingGui(
 			LivingEntity	entity,

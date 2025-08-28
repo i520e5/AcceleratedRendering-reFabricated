@@ -50,10 +50,10 @@ public class ModelPartMixin implements IAcceleratedRenderer<Void> {
 
 		if (			AcceleratedEntityRenderingFeature	.isEnabled						()
 				&&		AcceleratedEntityRenderingFeature	.shouldUseAcceleratedPipeline	()
-				&&		extension							.isAccelerated					()
 				&&	(	CoreFeature							.isRenderingLevel				()
 				||	(	CoreFeature							.isRenderingGui					()
 				&&		AcceleratedEntityRenderingFeature	.shouldAccelerateInGui			()))
+				&&		extension							.isAccelerated					()
 		) {
 			ci			.cancel		();
 			extension	.doRender	(

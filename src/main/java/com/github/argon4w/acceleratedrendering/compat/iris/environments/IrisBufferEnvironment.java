@@ -10,6 +10,8 @@ import com.github.argon4w.acceleratedrendering.core.programs.culling.LoadCulling
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.TransformProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.core.programs.overrides.IShaderProgramOverrides;
+import com.github.argon4w.acceleratedrendering.core.programs.overrides.LoadShaderProgramOverridesEvent;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.IPolygonProcessor;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.LoadPolygonProcessorEvent;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -63,6 +65,11 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 	}
 
 	@Override
+	public IShaderProgramOverrides getShaderProgramOverrides() {
+		return getSubSet().getShaderProgramOverrides();
+	}
+
+	@Override
 	public MeshUploadingProgramDispatcher selectMeshUploadingProgramDispatcher() {
 		return getSubSet().selectMeshUploadingProgramDispatcher();
 	}
@@ -98,6 +105,7 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 		private final VertexFormat							irisVertexFormat;
 		private final IMemoryLayout<VertexFormatElement>	layout;
 
+		private final IShaderProgramOverrides				shaderProgramOverrides;
 		private final MeshUploadingProgramDispatcher		meshUploadingProgramDispatcher;
 		private final TransformProgramDispatcher			transformProgramDispatcher;
 		private final ICullingProgramSelector				cullingProgramSelector;
@@ -109,14 +117,23 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 				ResourceLocation	meshUploadingProgramKey,
 				ResourceLocation	transformProgramKey
 		) {
+			var defaultTransformOverride		= new TransformProgramDispatcher	.DefaultTransformProgramOverride	(transformProgramKey,		4L * 4L);
+			var defaultUploadingOverride		= new MeshUploadingProgramDispatcher.DefaultMeshUploadingProgramOverride(meshUploadingProgramKey,	7L * 4L);
+
 			this.vanillaVertexFormat			= vanillaVertexFormat;
 			this.irisVertexFormat				= irisVertexFormat;
-			this.layout							= new VertexFormatMemoryLayout		(irisVertexFormat);
+			this.layout							= new VertexFormatMemoryLayout		(this.irisVertexFormat);
 
-			this.meshUploadingProgramDispatcher	= new MeshUploadingProgramDispatcher(meshUploadingProgramKey);
-			this.transformProgramDispatcher		= new TransformProgramDispatcher	(transformProgramKey);
 			this.cullingProgramSelector			= ModLoader.postEventWithReturn		(new LoadCullingProgramSelectorEvent(this.irisVertexFormat)).getSelector	();
 			this.polygonProcessor				= ModLoader.postEventWithReturn		(new LoadPolygonProcessorEvent		(this.irisVertexFormat)).getProcessor	();
+
+			this.meshUploadingProgramDispatcher	= new MeshUploadingProgramDispatcher();
+			this.transformProgramDispatcher		= new TransformProgramDispatcher	();
+			this.shaderProgramOverrides			= ModLoader.postEventWithReturn		(new LoadShaderProgramOverridesEvent(
+					this.irisVertexFormat,
+					defaultTransformOverride,
+					defaultUploadingOverride
+			));
 		}
 
 		@Override
@@ -137,6 +154,11 @@ public class IrisBufferEnvironment implements IBufferEnvironment {
 		@Override
 		public IMemoryLayout<VertexFormatElement> getLayout() {
 			return layout;
+		}
+
+		@Override
+		public IShaderProgramOverrides getShaderProgramOverrides() {
+			return shaderProgramOverrides;
 		}
 
 		@Override

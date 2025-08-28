@@ -4,80 +4,142 @@ import com.github.argon4w.acceleratedrendering.core.backends.programs.ComputePro
 import com.github.argon4w.acceleratedrendering.core.backends.programs.Uniform;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.StagingBufferPool;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.IMeshInfoCache;
+import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
+import com.github.argon4w.acceleratedrendering.core.programs.overrides.ITransformShaderProgramOverride;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
 
-import static org.lwjgl.opengl.GL46.GL_SHADER_STORAGE_BUFFER;
+import static org.lwjgl.opengl.GL46.*;
 
 public class TransformProgramDispatcher {
 
-	public	static	final int				VERTEX_BUFFER_IN_INDEX		= 0;
-	public	static	final int				VARYING_BUFFER_IN_INDEX		= 3;
-	private static	final int				GROUP_SIZE					= 128;
-	private static	final int				DISPATCH_COUNT_Y_Z			= 1;
+	public	static	final	int								VERTEX_BUFFER_IN_INDEX		= 0;
+	public	static	final	int								VARYING_BUFFER_IN_INDEX		= 3;
+	private static	final	int								GROUP_SIZE					= 128;
+	private static	final	int								DISPATCH_COUNT_Y_Z			= 1;
 
-	private			final ComputeProgram	program;
-	private			final Uniform			vertexCountUniform;
-	private			final Uniform			vertexOffsetUniform;
-	private			final Uniform			varyingOffsetUniform;
+	private					ITransformShaderProgramOverride	lastOverride;
 
-	public TransformProgramDispatcher(ResourceLocation key) {
-		this.program				= ComputeShaderProgramLoader.getProgram(key);
-		this.vertexCountUniform		= program					.getUniform("vertexCount");
-		this.vertexOffsetUniform	= program					.getUniform("vertexOffset");
-		this.varyingOffsetUniform	= program					.getUniform("varyingOffset");
+	public TransformProgramDispatcher() {
+		this.lastOverride = null;
 	}
 
 	public void dispatch(Collection<AcceleratedBufferBuilder> builders) {
-		program.useProgram();
+		var barriers = 0;
 
 		for (var builder : builders) {
-			var vertexCount		= builder.getVertexCount	();
-			var vertexBuffer	= builder.getVertexBuffer	();
-			var varyingBuffer	= builder.getVaryingBuffer	();
+			var currentOverride	= builder			.getTransformOverride	();
+			var vertexCount		= builder			.getVertexCount			();
+			var vertexBuffer	= builder			.getVertexBuffer		();
+			var varyingBuffer	= builder			.getVaryingBuffer		();
+
+			if (lastOverride != currentOverride) {
+				lastOverride = currentOverride;
+				lastOverride.useProgram		();
+				lastOverride.setupProgram	();
+			}
 
 			if (vertexCount != 0) {
-
-				vertexBuffer		.bindBase			(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_IN_INDEX);
-				varyingBuffer		.bindBase			(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_IN_INDEX);
-
-				vertexCountUniform	.uploadUnsignedInt	(vertexCount);
-				vertexOffsetUniform	.uploadUnsignedInt	((int) (vertexBuffer	.getOffset() / builder					.getVertexSize()));
-				varyingOffsetUniform.uploadUnsignedInt	((int) (varyingBuffer	.getOffset() / AcceleratedBufferBuilder	.VARYING_SIZE));
-
-				program.dispatch(
-						(vertexCount + GROUP_SIZE - 1) / GROUP_SIZE,
-						DISPATCH_COUNT_Y_Z,
-						DISPATCH_COUNT_Y_Z
+				vertexBuffer				.bindBase			(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_IN_INDEX);
+				varyingBuffer				.bindBase			(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_IN_INDEX);
+				barriers |= currentOverride	.dispatchTransform	(
+						vertexCount,
+						(int) (vertexBuffer	.getOffset() / builder.getVertexSize	()),
+						(int) (varyingBuffer.getOffset() / builder.getVaryingSize	())
 				);
 			}
 		}
 
-		program.resetProgram();
-		program.waitBarriers();
+		resetOverride	();
+		glUseProgram	(0);
+		glMemoryBarrier	(barriers);
 	}
 
-	public void dispatch(
+	public int dispatch(
+			AcceleratedBufferBuilder		builder,
 			StagingBufferPool.StagingBuffer	vertexBuffer,
 			StagingBufferPool.StagingBuffer	varyingBuffer,
 			long							vertexCount,
 			long							vertexOffset,
 			long							varyingOffset
 	) {
-		vertexBuffer		.bindBase			(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_IN_INDEX);
-		varyingBuffer		.bindBase			(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_IN_INDEX);
+		var currentOverride = builder.getTransformOverride();
 
-		vertexCountUniform	.uploadUnsignedInt	((int) vertexCount);
-		vertexOffsetUniform	.uploadUnsignedInt	((int) vertexOffset);
-		varyingOffsetUniform.uploadUnsignedInt	((int) varyingOffset);
+		if (lastOverride != currentOverride) {
+			lastOverride = currentOverride;
+			lastOverride.useProgram		();
+			lastOverride.setupProgram	();
+		}
 
-		program.useProgram	();
-		program.dispatch	(
-				(int) (vertexCount + GROUP_SIZE - 1) / GROUP_SIZE,
-				DISPATCH_COUNT_Y_Z,
-				DISPATCH_COUNT_Y_Z
+		vertexBuffer			.bindBase			(GL_SHADER_STORAGE_BUFFER, VERTEX_BUFFER_IN_INDEX);
+		varyingBuffer			.bindBase			(GL_SHADER_STORAGE_BUFFER, VARYING_BUFFER_IN_INDEX);
+
+		return currentOverride	.dispatchTransform	(
+				(int) vertexCount,
+				(int) vertexOffset,
+				(int) varyingOffset
 		);
+	}
+
+	public void resetOverride() {
+		lastOverride = null;
+	}
+
+	public static class DefaultTransformProgramOverride implements ITransformShaderProgramOverride {
+
+		private final long				varyingSize;
+		private final ComputeProgram	program;
+		private final Uniform			vertexCountUniform;
+		private final Uniform			vertexOffsetUniform;
+		private final Uniform			varyingOffsetUniform;
+
+		public DefaultTransformProgramOverride(ResourceLocation key, long varyingSize) {
+			this.varyingSize			= varyingSize;
+			this.program				= ComputeShaderProgramLoader.getProgram(key);
+			this.vertexCountUniform		= program					.getUniform("vertexCount");
+			this.vertexOffsetUniform	= program					.getUniform("vertexOffset");
+			this.varyingOffsetUniform	= program					.getUniform("varyingOffset");
+		}
+
+		@Override
+		public long getVaryingSize() {
+			return varyingSize;
+		}
+
+		@Override
+		public void useProgram() {
+			program.useProgram();
+		}
+
+		@Override
+		public void setupProgram() {
+			program.setup();
+		}
+
+		@Override
+		public void uploadVarying(long varyingAddress, int offset) {
+
+		}
+
+		@Override
+		public int dispatchTransform(
+				int vertexCount,
+				int vertexOffset,
+				int varyingOffset
+		) {
+			vertexCountUniform		.uploadUnsignedInt	(vertexCount);
+			vertexOffsetUniform		.uploadUnsignedInt	(vertexOffset);
+			varyingOffsetUniform	.uploadUnsignedInt	(varyingOffset);
+			program					.dispatch			(
+					(vertexCount + GROUP_SIZE - 1) / GROUP_SIZE,
+					DISPATCH_COUNT_Y_Z,
+					DISPATCH_COUNT_Y_Z
+			);
+
+			return program.getBarrierFlags();
+		}
 	}
 }

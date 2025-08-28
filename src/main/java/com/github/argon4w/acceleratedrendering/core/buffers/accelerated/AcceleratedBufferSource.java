@@ -10,6 +10,7 @@ import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUpl
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import lombok.Getter;
@@ -17,25 +18,28 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static org.lwjgl.opengl.GL46.*;
 
 public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 
-	@Getter private	final	IBufferEnvironment					environment;
-	private			final	AcceleratedRingBuffers				ringBuffers;
-	private			final	Set<AcceleratedRingBuffers.Buffers>	buffers;
-	private			final	IntSet								activeLayers;
+	@Getter private	final	IBufferEnvironment						environment;
+	private			final	AcceleratedRingBuffers					ringBuffers;
+	private			final	Set<AcceleratedRingBuffers.Buffers>		buffers;
+	private			final	Map<LayerKey, AcceleratedBufferBuilder> activeBuilders;
+	private			final	IntSet									activeLayers;
 
-	private					AcceleratedRingBuffers.Buffers		currentBuffer;
-	private 				boolean								used;
+	private					AcceleratedRingBuffers.Buffers			currentBuffer;
+	private 				boolean									used;
 
 	public AcceleratedBufferSource(IBufferEnvironment bufferEnvironment) {
 		this.environment	= bufferEnvironment;
 		this.ringBuffers	= new AcceleratedRingBuffers		(this.environment);
 		this.currentBuffer	= this.ringBuffers			.get	(false);
 		this.buffers		= ObjectLinkedOpenHashSet	.of		(this.currentBuffer);
+		this.activeBuilders	= new Object2ObjectOpenHashMap<>	();
 		this.activeLayers	= new IntAVLTreeSet					();
 
 		this.used			= false;
@@ -53,16 +57,18 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 			int			layerIndex
 	) {
 		var layerKey	= new LayerKey					(layerIndex, renderType);
+		var builder		= activeBuilders.get			(layerKey);
 		var builders	= currentBuffer	.getBuilders	();
 		var functions	= currentBuffer	.getFunctions	();
 		var layers		= currentBuffer	.getLayers		();
 		var function	= functions		.get			(layerIndex);
 		var layer		= layers		.get			(layerIndex);
-		var builder		= builders		.get			(layerKey);
 
 		if (builder != null) {
-			function.addBefore	(before);
-			function.addAfter	(after);
+			function = builder	.getFunction();
+			function			.addBefore	(before);
+			function			.addAfter	(after);
+
 			return builder;
 		}
 
@@ -97,15 +103,17 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 				varyingBuffer,
 				elementSegment,
 				currentBuffer,
+				function,
 				renderType
 		);
 
 		used = true;
 
-		builders	.put		(layerKey, builder);
-		function	.addBefore	(before);
-		function	.addAfter	(after);
-		activeLayers.add		(layerIndex);
+		builders		.put		(layerKey, builder);
+		function		.addBefore	(before);
+		function		.addAfter	(after);
+		activeBuilders	.put		(layerKey, builder);
+		activeLayers	.add		(layerIndex);
 
 		return builder;
 	}
@@ -124,7 +132,7 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 				continue;
 			}
 
-			ServerMesh.Builder.BUFFERS.get(environment.getLayout())	.getFirst								().bindBase(GL_SHADER_STORAGE_BUFFER,	MeshUploadingProgramDispatcher.SMALL_MESH_BUFFER_INDEX);
+			ServerMesh.Builder.BUFFERS.get(environment.getLayout())	.getFirst								().bindBase(GL_SHADER_STORAGE_BUFFER,	MeshUploadingProgramDispatcher.SPARSE_MESH_BUFFER_INDEX);
 			environment												.selectMeshUploadingProgramDispatcher	().dispatch(builders.values(),			buffer);
 			environment												.selectTransformProgramDispatcher		().dispatch(builders.values());
 
@@ -203,6 +211,7 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 
 		used			= false;
 		currentBuffer	= ringBuffers	.get	(false);
+		activeBuilders					.clear	();
 		activeLayers					.clear	();
 		buffers							.clear	();
 		buffers							.add	(currentBuffer);

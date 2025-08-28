@@ -6,6 +6,7 @@
   "client": [
     "AbstractContainerScreenMixin",
     "GuiGraphicsMixin",
+    "GuiMixin",
     "BakedModelMixin",
     "BakedQuadMixin",
     "ItemColorsAccessor",

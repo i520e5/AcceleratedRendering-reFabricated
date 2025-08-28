@@ -8,6 +8,8 @@ import com.github.argon4w.acceleratedrendering.core.programs.culling.LoadCulling
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.TransformProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.core.programs.overrides.IShaderProgramOverrides;
+import com.github.argon4w.acceleratedrendering.core.programs.overrides.LoadShaderProgramOverridesEvent;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.IPolygonProcessor;
 import com.github.argon4w.acceleratedrendering.core.programs.processing.LoadPolygonProcessorEvent;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -23,6 +25,7 @@ public class VanillaBufferEnvironment implements IBufferEnvironment {
 	private final VertexFormat							vertexFormat;
 	private final IMemoryLayout<VertexFormatElement>	layout;
 
+	private final IShaderProgramOverrides				shaderProgramOverrides;
 	private final MeshUploadingProgramDispatcher		meshUploadingProgramDispatcher;
 	private final TransformProgramDispatcher			transformProgramDispatcher;
 	private final ICullingProgramSelector				cullingProgramSelector;
@@ -33,13 +36,22 @@ public class VanillaBufferEnvironment implements IBufferEnvironment {
 			ResourceLocation	meshUploadingProgramKey,
 			ResourceLocation	transformProgramKey
 	) {
+		var defaultTransformOverride		= new TransformProgramDispatcher	.DefaultTransformProgramOverride	(transformProgramKey,		4L * 4L);
+		var defaultUploadingOverride		= new MeshUploadingProgramDispatcher.DefaultMeshUploadingProgramOverride(meshUploadingProgramKey,	5L * 4L);
+
 		this.vertexFormat					= vertexFormat;
 		this.layout							= new VertexFormatMemoryLayout	(vertexFormat);
 
-		this.meshUploadingProgramDispatcher	= new MeshUploadingProgramDispatcher(meshUploadingProgramKey);
-		this.transformProgramDispatcher		= new TransformProgramDispatcher	(transformProgramKey);
 		this.cullingProgramSelector			= ModLoader.postEventWithReturn		(new LoadCullingProgramSelectorEvent(this.vertexFormat)).getSelector	();
 		this.polygonProcessor				= ModLoader.postEventWithReturn		(new LoadPolygonProcessorEvent		(this.vertexFormat)).getProcessor	();
+
+		this.meshUploadingProgramDispatcher	= new MeshUploadingProgramDispatcher();
+		this.transformProgramDispatcher		= new TransformProgramDispatcher	();
+		this.shaderProgramOverrides			= ModLoader.postEventWithReturn		(new LoadShaderProgramOverridesEvent(
+				this.vertexFormat,
+				defaultTransformOverride,
+				defaultUploadingOverride
+		));
 	}
 
 	@Override
@@ -55,6 +67,11 @@ public class VanillaBufferEnvironment implements IBufferEnvironment {
 	@Override
 	public IMemoryLayout<VertexFormatElement> getLayout() {
 		return layout;
+	}
+
+	@Override
+	public IShaderProgramOverrides getShaderProgramOverrides() {
+		return shaderProgramOverrides;
 	}
 
 	@Override

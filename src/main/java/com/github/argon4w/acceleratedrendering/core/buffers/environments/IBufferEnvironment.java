@@ -6,6 +6,7 @@ import com.github.argon4w.acceleratedrendering.core.programs.culling.ICullingPro
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.IPolygonProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.TransformProgramDispatcher;
+import com.github.argon4w.acceleratedrendering.core.programs.overrides.IShaderProgramOverrides;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
@@ -19,6 +20,7 @@ public interface IBufferEnvironment {
 	boolean								isAccelerated						(VertexFormat		vertexFormat);
 	Set<VertexFormat>					getVertexFormats					();
 	IMemoryLayout<VertexFormatElement>	getLayout							();
+	IShaderProgramOverrides				getShaderProgramOverrides			();
 	MeshUploadingProgramDispatcher		selectMeshUploadingProgramDispatcher();
 	TransformProgramDispatcher			selectTransformProgramDispatcher	();
 	ICullingProgramDispatcher			selectCullingProgramDispatcher		(RenderType			renderType);

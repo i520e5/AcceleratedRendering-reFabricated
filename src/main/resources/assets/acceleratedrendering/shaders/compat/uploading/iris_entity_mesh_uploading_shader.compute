@@ -35,9 +35,6 @@ struct MeshInfo {
     uint    color;
     uint    uv1;
     uint    uv2;
-};
-
-struct IrisInfo {
     uint    iris_entity_0;
     uint    iris_entity_1;
 };
@@ -64,10 +61,6 @@ layout(binding=8,   std430) readonly    buffer MeshInfos {
     MeshInfo    meshInfos[];
 };
 
-layout(binding=9,   std430) readonly    buffer IrisInfos {
-    IrisInfo    irisInfos[];
-};
-
 layout(location=0) uniform uint meshCount;
 layout(location=1) uniform uint meshSize;
 layout(location=2) uniform uint vertexOffset;
@@ -85,7 +78,6 @@ void main() {
 
     Vertex      vertex          = meshVertices  [meshOffset + index];
     MeshInfo    meshInfo        = meshInfos     [meshIndex];
-    IrisInfo    irisInfo        = irisInfos     [meshIndex];
     SharingData sharingData     = sharings      [meshInfo.sharing];
     uint        vertexIndex     = index + meshIndex * meshSize + vertexOffset;
     uint        varyingIndex    = index + meshIndex * meshSize + varyingOffset;
@@ -114,8 +106,8 @@ void main() {
     vertices[vertexIndex].uv2           = packSnorm2x16 (uintBitsToFloat(uv2Out));
     vertices[vertexIndex].normal        = packSnorm4x8  (vec4           (normalize(normalOut), 0.0));
 
-    vertices[vertexIndex].iris_entity_0 = irisInfo.iris_entity_0;
-    vertices[vertexIndex].iris_entity_1 = irisInfo.iris_entity_1;
+    vertices[vertexIndex].iris_entity_0 = meshInfo.iris_entity_0;
+    vertices[vertexIndex].iris_entity_1 = meshInfo.iris_entity_1;
 
     varyings[varyingIndex].offset       = 0;
     varyings[varyingIndex].sharing      = meshInfo.sharing;

@@ -43,10 +43,10 @@ public interface GeoRendererMixin {
 
 		if (			AcceleratedEntityRenderingFeature	.isEnabled						()
 				&&		AcceleratedEntityRenderingFeature	.shouldUseAcceleratedPipeline	()
-				&&		extension							.isAccelerated					()
 				&&	(	CoreFeature							.isRenderingLevel				()
 				||	(	CoreFeature							.isRenderingGui					()
 				&&		AcceleratedEntityRenderingFeature	.shouldAccelerateInGui			()))
+				&&		extension							.isAccelerated					()
 		) {
 			var pose = poseStack.last();
 

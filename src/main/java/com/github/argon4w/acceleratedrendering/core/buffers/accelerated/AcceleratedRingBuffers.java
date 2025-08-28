@@ -65,6 +65,7 @@ public class AcceleratedRingBuffers extends LoopResetPool<AcceleratedRingBuffers
 		var index = 0;
 
 		if (force) {
+			index = size;
 			expand();
 		}
 

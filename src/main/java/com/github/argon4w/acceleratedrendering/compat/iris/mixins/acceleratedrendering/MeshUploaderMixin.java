@@ -4,7 +4,7 @@ import com.github.argon4w.acceleratedrendering.compat.iris.interfaces.IIrisMeshI
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.IMeshInfoCache;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.MeshUploaderPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.memory.IMemoryInterface;
-import com.github.argon4w.acceleratedrendering.core.buffers.memory.SimpleMemoryInterface;
+import com.github.argon4w.acceleratedrendering.core.buffers.memory.SimpleDynamicMemoryInterface;
 import com.llamalad7.mixinextras.sugar.Local;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,14 +15,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MeshUploaderPool.MeshUploader.class)
-public class MeshUploaderMixin {
+public abstract class MeshUploaderMixin {
 
-	@Shadow @Final private			IMeshInfoCache		meshInfos;
+	@Shadow @Final private	IMeshInfoCache meshInfos;
 
-	@Unique private static final	long				IRIS_INFO_SIZE			= 2L * 4L;
-	@Unique private static final	IMemoryInterface	IRIS_INFO_ENTITY		= new SimpleMemoryInterface(0L * 2L, IRIS_INFO_SIZE);
-	@Unique private static final	IMemoryInterface	IRIS_INFO_BLOCK_ENTITY	= new SimpleMemoryInterface(1L * 2L, IRIS_INFO_SIZE);
-	@Unique private static final	IMemoryInterface	IRIS_INFO_ITEM			= new SimpleMemoryInterface(2L * 2L, IRIS_INFO_SIZE);
+	@Unique private final	IMemoryInterface IRIS_INFO_ENTITY		= new SimpleDynamicMemoryInterface(5L * 4L + 0L * 2L, (MeshUploaderPool.MeshUploader) (Object) this);
+	@Unique private final	IMemoryInterface IRIS_INFO_BLOCK_ENTITY	= new SimpleDynamicMemoryInterface(5L * 4L + 1L * 2L, (MeshUploaderPool.MeshUploader) (Object) this);
+	@Unique private final	IMemoryInterface IRIS_INFO_ITEM			= new SimpleDynamicMemoryInterface(5L * 4L + 2L * 2L, (MeshUploaderPool.MeshUploader) (Object) this);
 
 	@Inject(
 			method	= "upload",
@@ -34,12 +33,12 @@ public class MeshUploaderMixin {
 			)
 	)
 	public void uploadIrisData(
-			CallbackInfo													ci,
-			@Local(name = "extraInfoAddress")	long						irisInfoAddress,
-			@Local(name = "i")					int							i
+			CallbackInfo								ci,
+			@Local(name = "meshInfoAddress")	long	meshInfoAddress,
+			@Local(name = "i")					int		offset
 	) {
-		IRIS_INFO_ENTITY		.at(i).putShort(irisInfoAddress, ((IIrisMeshInfoCache) meshInfos).getRenderedEntity		(i));
-		IRIS_INFO_BLOCK_ENTITY	.at(i).putShort(irisInfoAddress, ((IIrisMeshInfoCache) meshInfos).getRenderedBlockEntity(i));
-		IRIS_INFO_ITEM			.at(i).putShort(irisInfoAddress, ((IIrisMeshInfoCache) meshInfos).getRenderedItem		(i));
+		IRIS_INFO_ENTITY		.at(offset).putShort(meshInfoAddress, ((IIrisMeshInfoCache) meshInfos).getRenderedEntity		(offset));
+		IRIS_INFO_BLOCK_ENTITY	.at(offset).putShort(meshInfoAddress, ((IIrisMeshInfoCache) meshInfos).getRenderedBlockEntity	(offset));
+		IRIS_INFO_ITEM			.at(offset).putShort(meshInfoAddress, ((IIrisMeshInfoCache) meshInfos).getRenderedItem			(offset));
 	}
 }

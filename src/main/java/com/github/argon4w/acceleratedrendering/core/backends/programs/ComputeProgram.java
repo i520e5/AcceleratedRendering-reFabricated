@@ -27,6 +27,10 @@ public class ComputeProgram {
 		);
 	}
 
+	public void setup() {
+
+	}
+
 	public void linkProgram() {
 		glLinkProgram(programHandle);
 	}

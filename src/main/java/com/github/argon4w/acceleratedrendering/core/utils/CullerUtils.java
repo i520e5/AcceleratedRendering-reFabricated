@@ -28,7 +28,6 @@ public class CullerUtils {
 
 		var minU = 1.0f;
 		var minV = 1.0f;
-
 		var maxU = 0.0f;
 		var maxV = 0.0f;
 
@@ -46,11 +45,22 @@ public class CullerUtils {
 			maxV = Math.max(maxV, v);
 		}
 
-		var minX = Math.max(0, Mth.floor(minU * texture.getWidth()));
-		var minY = Math.max(0, Mth.floor(minV * texture.getHeight()));
+		var width	= texture.getWidth	();
+		var height	= texture.getHeight	();
 
-		var maxX = Math.min(texture.getWidth(),		Mth.ceil(maxU * texture.getWidth()));
-		var maxY = Math.min(texture.getHeight(),	Mth.ceil(maxV * texture.getHeight()));
+		var minX	= Math.max(0, 		Mth.floor	(minU * texture.getWidth	()));
+		var minY	= Math.max(0, 		Mth.floor	(minV * texture.getHeight	()));
+		var maxX	= Math.min(width,	Mth.ceil	(maxU * texture.getWidth	()));
+		var maxY	= Math.min(height,	Mth.ceil	(maxV * texture.getHeight	()));
+
+		if (		minX == maxX
+				||	minY == maxY
+		) {
+			var x = Math.min(minX, width	- 1);
+			var y = Math.min(minY, height	- 1);
+
+			return FastColor.ABGR32.alpha(texture.getPixelRGBA(x, y)) == 0;
+		}
 
 		for (var x = minX; x < maxX; x++) {
 			for (var y = minY; y < maxY; y++) {

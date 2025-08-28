@@ -5,8 +5,10 @@ import com.github.argon4w.acceleratedrendering.core.backends.programs.ComputePro
 import com.github.argon4w.acceleratedrendering.core.backends.programs.Uniform;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedRingBuffers;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders.AcceleratedBufferBuilder;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.IMeshInfoCache;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.meshes.MeshUploaderPool;
 import com.github.argon4w.acceleratedrendering.core.programs.ComputeShaderProgramLoader;
+import com.github.argon4w.acceleratedrendering.core.programs.overrides.IUploadingShaderProgramOverride;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceArrayList;
 import net.minecraft.resources.ResourceLocation;
@@ -16,48 +18,40 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.lwjgl.opengl.GL46.GL_SHADER_STORAGE_BUFFER;
+import static org.lwjgl.opengl.GL46.*;
 
 public class MeshUploadingProgramDispatcher {
 
-	private static	final int													GROUP_SIZE				= 128;
-	private static	final int													DISPATCH_COUNT_Y_Z		= 1;
-	public static	final int													SMALL_MESH_BUFFER_INDEX	= 5;
-	public static	final int													MESH_BUFFER_INDEX		= 7;
+	private static	final int														GROUP_SIZE					= 128;
+	private static	final int														DISPATCH_COUNT_Y_Z			= 1;
+	public static	final int														SPARSE_MESH_BUFFER_INDEX	= 5;
+	public static	final int														MESH_BUFFER_INDEX			= 7;
 
-	private			final Map<IServerBuffer, List<MeshUploaderPool.MeshUploader>>	denseUploaders;
-	private			final Map<IServerBuffer, List<MeshUploaderPool.MeshUploader>>	sparseUploaders;
-	private			final ComputeProgram											program;
-	private			final Uniform													meshCountUniform;
-	private			final Uniform													meshSizeUniform;
-	private			final Uniform													vertexOffsetUniform;
-	private			final Uniform													varyingOffsetUniform;
-	private			final Uniform													meshOffsetUniform;
+	private			final	Map<IServerBuffer, List<MeshUploaderPool.MeshUploader>>	denseUploaders;
+	private			final	Map<IServerBuffer, List<MeshUploaderPool.MeshUploader>>	sparseUploaders;
 
-	public MeshUploadingProgramDispatcher(ResourceLocation key) {
-		this.denseUploaders			= new Reference2ObjectLinkedOpenHashMap<>	();
-		this.sparseUploaders		= new Reference2ObjectLinkedOpenHashMap<>	();
-		this.program				= ComputeShaderProgramLoader.getProgram		(key);
-		this.meshCountUniform		= program					.getUniform		("meshCount");
-		this.meshSizeUniform		= program					.getUniform		("meshSize");
-		this.vertexOffsetUniform	= program					.getUniform		("vertexOffset");
-		this.varyingOffsetUniform	= program					.getUniform		("varyingOffset");
-		this.meshOffsetUniform		= program					.getUniform		("meshOffset");
+	private					IUploadingShaderProgramOverride							lastOverride;
+
+	public MeshUploadingProgramDispatcher() {
+		this.denseUploaders		= new Reference2ObjectLinkedOpenHashMap<>();
+		this.sparseUploaders	= new Reference2ObjectLinkedOpenHashMap<>();
+		this.lastOverride		= null;
 	}
 
 	public void dispatch(Collection<AcceleratedBufferBuilder> builders, AcceleratedRingBuffers.Buffers buffer) {
-		var transformProgramDispatcher = buffer
+		lastOverride	= null;
+		var barriers	= 0;
+		var transform	= buffer
 				.getBufferEnvironment				()
 				.selectTransformProgramDispatcher	();
 
 		for (var builder : builders) {
 			var vertexBuffer	= builder	.getVertexBuffer	();
 			var varyingBuffer	= builder	.getVaryingBuffer	();
-			var vertexSize		= builder	.getVertexSize		();
 			var meshVertexCount = builder	.getMeshVertexCount	();
 
-			vertexBuffer					.reserve			(meshVertexCount * vertexSize);
-			varyingBuffer					.reserve			(meshVertexCount * AcceleratedBufferBuilder.VARYING_SIZE);
+			vertexBuffer					.reserve			(meshVertexCount * builder.getVertexSize	());
+			varyingBuffer					.reserve			(meshVertexCount * builder.getVaryingSize	());
 			vertexBuffer					.allocateOffset		();
 			varyingBuffer					.allocateOffset		();
 		}
@@ -71,13 +65,12 @@ public class MeshUploadingProgramDispatcher {
 
 			var vertexBuffer	= builder		.getVertexBuffer	();
 			var varyingBuffer	= builder		.getVaryingBuffer	();
-			var vertexSize		= builder		.getVertexSize		();
 			var vertexCount		= builder		.getVertexCount		();
 
 			var vertexAddress	= vertexBuffer	.getCurrent			();
 			var varyingAddress	= varyingBuffer	.getCurrent			();
-			var vertexOffset	= vertexBuffer	.getOffset			() / vertexSize;
-			var varyingOffset	= varyingBuffer	.getOffset			() / AcceleratedBufferBuilder.VARYING_SIZE;
+			var vertexOffset	= vertexBuffer	.getOffset			() / builder.getVertexSize	();
+			var varyingOffset	= varyingBuffer	.getOffset			() / builder.getVaryingSize	();
 
 			for (var uploader : builder
 					.getMeshUploaders	()
@@ -110,32 +103,38 @@ public class MeshUploadingProgramDispatcher {
 					var meshSize	= mesh		.size			();
 
 					for (var i = 0; i < meshCount; i ++) {
-						builder.getColorOffset()					.at(offset).putInt(vertexAddress, FastColor.ABGR32	.fromArgb32		(meshInfos.getColor(i)));
-						builder.getUv1Offset()						.at(offset).putInt(vertexAddress, meshInfos			.getOverlay		(i));
-						builder.getUv2Offset()						.at(offset).putInt(vertexAddress, meshInfos			.getLight		(i));
+						builder.getColorOffset		().at(offset)	.putInt			(vertexAddress, FastColor.ABGR32.fromArgb32		(meshInfos.getColor(i)));
+						builder.getUv1Offset		().at(offset)	.putInt			(vertexAddress, meshInfos		.getOverlay		(i));
+						builder.getUv2Offset		().at(offset)	.putInt			(vertexAddress, meshInfos		.getLight		(i));
 
-						AcceleratedBufferBuilder.VARYING_SHARING	.at(offset).putInt(varyingAddress, meshInfos		.getSharing		(i));
-						AcceleratedBufferBuilder.VARYING_MESH		.at(offset).putInt(varyingAddress, mesh				.offset			());
-						AcceleratedBufferBuilder.VARYING_SHOULD_CULL.at(offset).putInt(varyingAddress, meshInfos		.getShouldCull	(i));
+						builder.getVaryingSharing	().at(offset)	.putInt			(varyingAddress, meshInfos		.getSharing		(i));
+						builder.getVaryingMesh		().at(offset)	.putInt			(varyingAddress, mesh			.offset			());
+						builder.getVaryingShouldCull().at(offset)	.putInt			(varyingAddress, meshInfos		.getShouldCull	(i));
+						builder.getTransformOverride()				.uploadVarying	(varyingAddress, offset);
 
 						for (var offsetValue = 0; offsetValue < meshSize; offsetValue ++) {
-							AcceleratedBufferBuilder
-									.VARYING_OFFSET
-									.at		(offset)
-									.at		(offsetValue)
-									.putInt	(varyingAddress, offsetValue);
+							builder
+									.getVaryingOffset	()
+									.at					(offset)
+									.at					(offsetValue)
+									.putInt				(varyingAddress, offsetValue);
 						}
 
 						offset += meshSize;
 					}
 				}
 
-				if (offset != 0) {
-					meshBuffer					.bindBase(GL_SHADER_STORAGE_BUFFER, SMALL_MESH_BUFFER_INDEX);
-					transformProgramDispatcher	.dispatch(
+				var count = offset - sparseStart;
+
+				if (count != 0) {
+					lastOverride = null;
+
+					meshBuffer				.bindBase(GL_SHADER_STORAGE_BUFFER, SPARSE_MESH_BUFFER_INDEX);
+					barriers |= transform	.dispatch(
+							builder,
 							vertexBuffer,
 							varyingBuffer,
-							offset,
+							count,
 							sparseStart + vertexCount + vertexOffset,
 							sparseStart + vertexCount + varyingOffset
 					);
@@ -145,27 +144,31 @@ public class MeshUploadingProgramDispatcher {
 			}
 
 			for (var meshBuffer : denseUploaders.keySet()) {
-				program		.useProgram	();
-				meshBuffer	.bindBase	(GL_SHADER_STORAGE_BUFFER, MESH_BUFFER_INDEX);
+				meshBuffer.bindBase(GL_SHADER_STORAGE_BUFFER, MESH_BUFFER_INDEX);
 
 				for (var uploader : denseUploaders.get(meshBuffer)) {
-					var meshCount	= uploader.getMeshInfos()	.getMeshCount	();
-					var mesh		= uploader					.getServerMesh	();
-					var meshSize	= mesh						.size			();
-					var uploadSize	= meshCount * meshSize;
+					var currentOverride	= builder					.getUploadingOverride	();
+					var meshCount		= uploader.getMeshInfos()	.getMeshCount			();
+					var mesh			= uploader					.getServerMesh			();
+					var meshSize		= mesh						.size					();
+					var uploadSize		= meshCount * meshSize;
 
-					uploader			.upload				();
-					uploader			.bindBuffers		();
-					meshCountUniform	.uploadUnsignedInt	(meshCount);
-					meshSizeUniform		.uploadUnsignedInt	(meshSize);
-					vertexOffsetUniform	.uploadUnsignedInt	((int) (offset + vertexCount + vertexOffset));
-					varyingOffsetUniform.uploadUnsignedInt	((int) (offset + vertexCount + varyingOffset));
-					meshOffsetUniform	.uploadUnsignedInt	((int) mesh.offset());
+					if (lastOverride == null) {
+						lastOverride = currentOverride;
+						lastOverride.useProgram		();
+						lastOverride.setupProgram	();
+					}
 
-					program.dispatch(
-							(uploadSize + GROUP_SIZE - 1) / GROUP_SIZE,
-							DISPATCH_COUNT_Y_Z,
-							DISPATCH_COUNT_Y_Z
+					transform					.resetOverride		();
+					uploader					.upload				();
+					uploader					.bindBuffers		();
+					barriers |= currentOverride	.dispatchUploading	(
+							uploadSize,
+							meshCount,
+							meshSize,
+							(int) (offset + vertexCount + vertexOffset),
+							(int) (offset + vertexCount + varyingOffset),
+							(int) mesh.offset()
 					);
 
 					offset += uploadSize;
@@ -178,9 +181,74 @@ public class MeshUploadingProgramDispatcher {
 			}
 		}
 
-		if (!denseUploaders.isEmpty()) {
-			program.resetProgram();
-			program.waitBarriers();
+		glMemoryBarrier(barriers);
+	}
+
+	public void resetOverride() {
+		lastOverride = null;
+	}
+
+	public static class DefaultMeshUploadingProgramOverride implements IUploadingShaderProgramOverride {
+
+		private final long				meshInfoSize;
+		private final ComputeProgram	program;
+		private final Uniform			meshCountUniform;
+		private final Uniform			meshSizeUniform;
+		private final Uniform			vertexOffsetUniform;
+		private final Uniform			varyingOffsetUniform;
+		private final Uniform			meshOffsetUniform;
+
+		public DefaultMeshUploadingProgramOverride(ResourceLocation key, long meshInfoSize) {
+			this.meshInfoSize			= meshInfoSize;
+			this.program				= ComputeShaderProgramLoader.getProgram(key);
+			this.meshCountUniform		= program					.getUniform("meshCount");
+			this.meshSizeUniform		= program					.getUniform("meshSize");
+			this.vertexOffsetUniform	= program					.getUniform("vertexOffset");
+			this.varyingOffsetUniform	= program					.getUniform("varyingOffset");
+			this.meshOffsetUniform		= program					.getUniform("meshOffset");
+		}
+
+		@Override
+		public long getMeshInfoSize() {
+			return meshInfoSize;
+		}
+
+		@Override
+		public void useProgram() {
+			program.useProgram();
+		}
+
+		@Override
+		public void setupProgram() {
+			program.setup();
+		}
+
+		@Override
+		public void uploadMeshInfo(long meshInfoAddress, int meshInfoIndex) {
+
+		}
+
+		@Override
+		public int dispatchUploading(
+				int uploadSize,
+				int meshCount,
+				int meshSize,
+				int vertexOffset,
+				int varyingOffset,
+				int meshOffset
+		) {
+			meshCountUniform	.uploadUnsignedInt	(meshCount);
+			meshSizeUniform		.uploadUnsignedInt	(meshSize);
+			vertexOffsetUniform	.uploadUnsignedInt	(vertexOffset);
+			varyingOffsetUniform.uploadUnsignedInt	(varyingOffset);
+			meshOffsetUniform	.uploadUnsignedInt	(meshOffset);
+			program				.dispatch			(
+					(uploadSize + GROUP_SIZE - 1) / GROUP_SIZE,
+					DISPATCH_COUNT_Y_Z,
+					DISPATCH_COUNT_Y_Z
+			);
+
+			return program.getBarrierFlags();
 		}
 	}
 }

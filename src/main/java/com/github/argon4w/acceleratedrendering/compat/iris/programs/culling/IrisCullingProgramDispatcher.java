@@ -46,8 +46,8 @@ public class IrisCullingProgramDispatcher implements ICullingProgramDispatcher {
 		projectMatrixUniform.uploadMatrix4f		(shadowState ? ShadowRenderer.PROJECTION	: RenderSystem.getProjectionMatrix	());
 
 		polygonCountUniform	.uploadUnsignedInt	(polygonCount);
-		vertexOffsetUniform	.uploadUnsignedInt	((int) (builder.getVertexBuffer()	.getOffset() / builder					.getVertexSize()));
-		varyingOffsetUniform.uploadUnsignedInt	((int) (builder.getVaryingBuffer()	.getOffset() / AcceleratedBufferBuilder	.VARYING_SIZE));
+		vertexOffsetUniform	.uploadUnsignedInt	((int) (builder.getVertexBuffer	().getOffset() / builder.getVertexSize	()));
+		varyingOffsetUniform.uploadUnsignedInt	((int) (builder.getVaryingBuffer().getOffset() / builder.getVaryingSize	()));
 
 		program.useProgram	();
 		program.dispatch	(

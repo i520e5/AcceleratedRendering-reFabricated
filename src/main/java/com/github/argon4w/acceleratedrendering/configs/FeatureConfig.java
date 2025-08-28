@@ -85,7 +85,7 @@ public class FeatureConfig {
 				.comment				("Count of buffer sets that holds data for in-flight frame rendering.")
 				.comment				("Changing this value may affects your FPS. Smaller value means less in-flight frames, while larger values means more in-flight frames. More in-flight frames means more FPS but more VRAM.")
 				.translation			("acceleratedrendering.configuration.core_settings.pooled_buffer_set_size")
-				.defineInRange			("pooled_buffer_set_size",		5,	1,	Integer.MAX_VALUE);
+				.defineInRange			("pooled_buffer_set_size",		8,	1,	Integer.MAX_VALUE);
 
 		corePooledElementBufferSize						= builder
 				.gameRestart			()
