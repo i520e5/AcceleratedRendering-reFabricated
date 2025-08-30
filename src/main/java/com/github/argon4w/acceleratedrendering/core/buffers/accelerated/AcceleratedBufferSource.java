@@ -4,6 +4,7 @@ import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.layers.CustomLayerFunction;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.layers.EmptyLayerFunction;
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.layers.LayerKey;
+import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.pools.DrawContextPool;
 import com.github.argon4w.acceleratedrendering.core.buffers.environments.IBufferEnvironment;
 import com.github.argon4w.acceleratedrendering.core.meshes.ServerMesh;
 import com.github.argon4w.acceleratedrendering.core.programs.dispatchers.MeshUploadingProgramDispatcher;
@@ -17,6 +18,7 @@ import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -173,6 +175,7 @@ public class AcceleratedBufferSource implements IAcceleratedBufferSource {
 				}
 
 				glMemoryBarrier					(GL_ELEMENT_ARRAY_BARRIER_BIT | GL_COMMAND_BARRIER_BIT);
+				layer			.sort			(Comparator.naturalOrder());
 				BufferUploader	.invalidate		();
 				buffer			.bindDrawBuffers();
 				function		.runBefore		();

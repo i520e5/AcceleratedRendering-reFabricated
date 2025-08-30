@@ -8,6 +8,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.renderer.RenderType;
+import org.jetbrains.annotations.NotNull;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -45,7 +46,7 @@ public class DrawContextPool extends SimpleResetPool<DrawContextPool.IndirectDra
 
 	@Getter
 	@Setter
-	public class IndirectDrawContext {
+	public class IndirectDrawContext implements Comparable<IndirectDrawContext> {
 
 		public static	final	int					ELEMENT_COUNT_INDEX		= 0;
 		public static	final	IMemoryInterface	INDIRECT_COUNT			= new SimpleMemoryInterface(0L * 4L, 4);
@@ -89,6 +90,14 @@ public class DrawContextPool extends SimpleResetPool<DrawContextPool.IndirectDra
 					mode.asGLMode,
 					GL_UNSIGNED_INT,
 					commandOffset
+			);
+		}
+
+		@Override
+		public int compareTo(DrawContextPool.IndirectDrawContext that) {
+			return Boolean.compare(
+					this.renderType.sortOnUpload,
+					that.renderType.sortOnUpload
 			);
 		}
 	}

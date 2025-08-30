@@ -65,6 +65,7 @@ public class BufferBuilderMixin implements IAccelerationHolder, IAcceleratedVert
 	}
 
 	@Unique
+	@Override
 	public AcceleratedBufferBuilder getAccelerated() {
 		if (		acceleration == null
 				||	acceleration.isOutdated()
