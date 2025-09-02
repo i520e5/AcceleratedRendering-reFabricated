@@ -8,7 +8,6 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import lombok.Getter;
 import lombok.Setter;
 import net.minecraft.client.renderer.RenderType;
-import org.jetbrains.annotations.NotNull;
 
 import static org.lwjgl.opengl.GL46.*;
 
@@ -72,11 +71,11 @@ public class DrawContextPool extends SimpleResetPool<DrawContextPool.IndirectDra
 		}
 
 		public void bindComputeBuffers(ElementBufferPool.ElementSegment elementSegmentIn) {
-			var elementOffset		= elementSegmentIn	.getOffset	();
-			var commandAddress		= context			.addressAt	(commandOffset);
+			var elementOffset	= elementSegmentIn	.getOffset	();
+			var commandAddress	= context			.addressAt	(commandOffset);
 
-			INDIRECT_COUNT		.putInt		(commandAddress,	0);
-			INDIRECT_FIRST_INDEX.putInt		(commandAddress,	elementOffset / 4);
+			INDIRECT_COUNT		.putInt		(commandAddress, 0);
+			INDIRECT_FIRST_INDEX.putInt		(commandAddress, elementOffset / 4);
 			context				.bindRange	(
 					GL_ATOMIC_COUNTER_BUFFER,
 					ELEMENT_COUNT_INDEX,
