@@ -7,6 +7,7 @@ import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.builders
 import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import net.minecraft.client.renderer.RenderType;
 
@@ -71,9 +72,9 @@ public class AcceleratedBufferSources implements IAcceleratedBufferSource {
 		private			boolean										canSort;
 
 		private Builder() {
-			this.sources		= new Object2ObjectOpenHashMap<>();
-			this.validModes		= new ReferenceOpenHashSet<>	();
-			this.invalidNames	= new ObjectOpenHashSet<>		();
+			this.sources		= new Reference2ObjectOpenHashMap	<>();
+			this.validModes		= new ReferenceOpenHashSet			<>();
+			this.invalidNames	= new ObjectOpenHashSet				<>();
 
 			this.canSort		= false;
 		}
