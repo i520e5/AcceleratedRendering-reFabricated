@@ -1,7 +1,6 @@
 package com.github.argon4w.acceleratedrendering.compat.iris.mixins.acceleratedrendering;
 
 import com.github.argon4w.acceleratedrendering.core.buffers.accelerated.AcceleratedBufferSource;
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import net.irisshaders.batchedentityrendering.impl.WrappableRenderType;
 import net.irisshaders.iris.vertices.ImmediateState;
 import net.minecraft.client.renderer.RenderType;

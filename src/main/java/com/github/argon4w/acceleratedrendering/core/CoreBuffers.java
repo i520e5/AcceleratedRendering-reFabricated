@@ -17,23 +17,23 @@ public class CoreBuffers {
 
 	public static final AcceleratedBufferSources CORE = AcceleratedBufferSources
 			.builder()
-			.source	(BLOCK)
-			.source	(ENTITY)
-			.source	(POS)
-			.source	(POS_TEX)
-			.source	(POS_TEX_COLOR)
-			.source	(POS_COLOR_TEX_LIGHT)
-			.mode	(VertexFormat.Mode.QUADS)
-			.mode	(VertexFormat.Mode.TRIANGLES)
+			.source	(CoreBuffers		.BLOCK)
+			.source	(CoreBuffers		.ENTITY)
+			.source	(CoreBuffers		.POS)
+			.source	(CoreBuffers		.POS_TEX)
+			.source	(CoreBuffers		.POS_TEX_COLOR)
+			.source	(CoreBuffers		.POS_COLOR_TEX_LIGHT)
+			.mode	(VertexFormat.Mode	.QUADS)
+			.mode	(VertexFormat.Mode	.TRIANGLES)
 			.invalid("breeze_wind")
 			.invalid("energy_swirl")
 			.build	();
 
 	public static final AcceleratedBufferSources OUTLINE = AcceleratedBufferSources
 			.builder()
-			.source	(POS_TEX_COLOR_OUTLINE)
-			.mode	(VertexFormat.Mode.QUADS)
-			.mode	(VertexFormat.Mode.TRIANGLES)
+			.source	(CoreBuffers		.POS_TEX_COLOR_OUTLINE)
+			.mode	(VertexFormat.Mode	.QUADS)
+			.mode	(VertexFormat.Mode	.TRIANGLES)
 			.invalid("breeze_wind")
 			.invalid("energy_swirl")
 			.build	();

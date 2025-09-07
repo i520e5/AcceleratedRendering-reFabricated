@@ -8,8 +8,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.neoforged.bus.api.Event;
 import net.neoforged.fml.event.IModBusEvent;
 
-import java.util.Map;
-
 @Getter
 public class LoadShaderProgramOverridesEvent extends Event implements IModBusEvent, IShaderProgramOverrides {
 

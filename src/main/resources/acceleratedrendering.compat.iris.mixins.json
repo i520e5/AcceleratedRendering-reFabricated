@@ -19,7 +19,6 @@
     "acceleratedrendering.SimpleMeshInfoCacheMixin",
     "acceleratedrendering.UnsafeMemoryMeshInfoCacheMixin",
     "iris.FullyBufferedMultiBufferSourceMixin",
-    "iris.HandRendererMixin",
     "iris.IrisVertexFormatsMixin",
     "iris.ModelToEntityVertexSerializerMixin",
     "iris.ShadowRendererMixin",

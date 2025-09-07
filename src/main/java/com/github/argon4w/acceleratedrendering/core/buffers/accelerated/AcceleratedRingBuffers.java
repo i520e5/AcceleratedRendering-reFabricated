@@ -78,27 +78,27 @@ public class AcceleratedRingBuffers extends LoopResetPool<AcceleratedRingBuffers
 
 	public static class Buffers {
 
-		public static	final	int																VERTEX_BUFFER_OUT_INDEX		= 1;
-		public static	final	int																SHARING_BUFFER_INDEX		= 2;
-		public static	final	int																VARYING_BUFFER_OUT_INDEX	= 4;
-		public static	final	int																ELEMENT_BUFFER_INDEX		= 6;
+		public static	final	int															VERTEX_BUFFER_OUT_INDEX		= 1;
+		public static	final	int															SHARING_BUFFER_INDEX		= 2;
+		public static	final	int															VARYING_BUFFER_OUT_INDEX	= 4;
+		public static	final	int															ELEMENT_BUFFER_INDEX		= 6;
 
-		private			final	MeshUploaderPool												meshUploaderPool;
-		private			final 	DrawContextPool													drawContextPool;
-		private			final 	ElementBufferPool												elementBufferPool;
-		private			final 	MappedBuffer													sharingBuffer;
-		private			final 	StagingBufferPool												varyingBuffer;
-		private			final	StagingBufferPool												vertexBuffer;
-		private			final 	VertexArray														vertexArray;
-		private			final 	Sync															sync;
-		private			final 	MutableInt														sharing;
-		@Getter	private	final	Map				<LayerKey, AcceleratedBufferBuilder>			builders;
-		@Getter	private final	Int2ReferenceMap<List<DrawContextPool.IndirectDrawContext>>		layers;
-		@Getter private final	Int2ReferenceMap<ILayerFunction>								functions;
-		@Getter private	final	IBufferEnvironment												bufferEnvironment;
+		private			final	MeshUploaderPool											meshUploaderPool;
+		private			final 	DrawContextPool												drawContextPool;
+		private			final 	ElementBufferPool											elementBufferPool;
+		private			final 	MappedBuffer												sharingBuffer;
+		private			final 	StagingBufferPool											varyingBuffer;
+		private			final	StagingBufferPool											vertexBuffer;
+		private			final 	VertexArray													vertexArray;
+		private			final 	Sync														sync;
+		private			final 	MutableInt													sharing;
+		@Getter	private	final	Map				<LayerKey, AcceleratedBufferBuilder>		builders;
+		@Getter	private final	Int2ReferenceMap<List<DrawContextPool.IndirectDrawContext>>	layers;
+		@Getter private final	Int2ReferenceMap<ILayerFunction>							functions;
+		@Getter private	final	IBufferEnvironment											bufferEnvironment;
 
-		private 				boolean															used;
-		private 				IMemoryLayout<VertexFormatElement>								layout;
+		private 				boolean														used;
+		private 				IMemoryLayout<VertexFormatElement>							layout;
 
 		public Buffers(IBufferEnvironment bufferEnvironment) {
 			var size				= CoreFeature.getPooledElementBufferSize();
@@ -120,14 +120,14 @@ public class AcceleratedRingBuffers extends LoopResetPool<AcceleratedRingBuffers
 		}
 
 		public void reset() {
-			meshUploaderPool	.reset				();
-			drawContextPool		.reset				();
-			elementBufferPool	.reset				();
-			varyingBuffer		.reset				();
-			sharingBuffer		.reset				();
-			vertexBuffer		.reset				();
-			sharing				.setValue			(0);
-			builders			.clear				();
+			meshUploaderPool	.reset		();
+			drawContextPool		.reset		();
+			elementBufferPool	.reset		();
+			varyingBuffer		.reset		();
+			sharingBuffer		.reset		();
+			vertexBuffer		.reset		();
+			sharing				.setValue	(0);
+			builders			.clear		();
 		}
 
 		public void bindTransformBuffers() {
